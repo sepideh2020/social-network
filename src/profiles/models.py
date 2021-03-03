@@ -12,7 +12,7 @@ class Profile(models.Model):
     bio = models.TextField(default='no bio ...', max_length=300)
     email = models.EmailField(max_length=200, blank=True)
     country = models.CharField(max_length=200, blank=True)
-    avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile
+    avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
     # install pillow
     # create media_root
     # find avatar.png
@@ -27,6 +27,29 @@ class Profile(models.Model):
 
     def get_friends_no(self):
         return self.friends.all().count()
+
+    def get_posts_no(self):
+        # instead of author_set.all() we wrote posts.all() because author verbose_name is posts
+        return self.posts.all().count()
+
+    def get_all_authors_posts(self):
+        return self.posts.all()
+
+    def get_likes_given_no(self):
+        likes = self.like_set.all()
+        total_liked = 0
+        for item in likes:
+            if item.value == 'Like':
+                total_liked += 1
+        return total_liked
+
+    def get_likes_received_no(self):
+        """this function counts all likes of a particular post"""
+        posts = self.posts.all()  # gets all posts of a particular profile
+        total_liked = 0
+        for item in posts:
+            total_liked += item.liked.all().count()
+        return total_liked
 
     def __str__(self):
         return '{}-{}'.format(self.user.username, self.created.strftime(('%d-%m-%Y')))
