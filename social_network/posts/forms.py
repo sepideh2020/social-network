@@ -3,6 +3,9 @@ from .models import Comment, Post
 
 
 class CommentModelForm(forms.ModelForm):
+    """
+    This form added for send a comment below a post
+    """
     body = forms.CharField(label='',
                            widget=forms.TextInput(attrs={'placeholder': 'Add a comment...'}))
 
@@ -12,7 +15,10 @@ class CommentModelForm(forms.ModelForm):
 
 
 class PostModelForm(forms.ModelForm):
-    content = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}))
+    """
+    This form added for send a post
+    """
+    content = forms.CharField(widget=forms.Textarea(attrs={'rows': 2}))
 
     class Meta:
         model = Post
