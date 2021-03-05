@@ -1,23 +1,30 @@
 {% extends 'base.html' %}
 
-{% block title %}posts{% endblock title %}
+{% block title %}main page{% endblock title %}
 
 {% block content %}
     <div class="ui grid">
-        <div class="row">
-            <div class="eleven wide column">
-                {% for obj in qs %}
-                    <div class="ui fluid card">
-                        <div class="content">
-                            {{ obj.content }}
-                        </div>
-                        <div class="content">
-                            # manage update and delete button
-                            <img class="ui avatar image" src={{ obj.author.avatar.url }}>
-                            {{ obj.author.user }} - {{ obj.created|timesince }} ago
-                            <form action="{% url 'posts:like-post-view' %}" method="POST">
+        <div class="eleven wide column">
+            {% for obj in qs %}
+
+                <div class="ui fluid card">
+                    <div class="content">
+                        <img class="ui avatar image" src={{ obj.author.avatar.url }}>
+                        {{ obj.author.user }} - {{ obj.created|timesince }} ago
+                    </div>
+                    <div class="ui fluid image">
+                        {% if obj.image %}
+                            <img src={{ obj.image.url }}>
+                        {% endif %}
+                    </div>
+                    <div class="content">
+                        <p> {{ obj.content }} </p>
+                        <div class="right floated">
+                            <form action="{% url 'posts:like-post-view' %}" method="POST" class='like-form'
+                                  id='{{ obj.id }}'>
                                 {% csrf_token %}
                                 <input type="hidden" name="post_id" value={{ obj.id }}>
+
                                 <button type="submit" class="ui button like-btn{{ obj.id }}">
                                     {% if profile not in obj.liked.all %}
                                         Like
@@ -33,16 +40,29 @@
                                         likes
                                     </div>
                                 </div>
-
                             </form>
                         </div>
-                        <div>
-                            {% if obj.comment_set.all %}
-                                {% for c in obj.comment_set.all %}
-                                    <p>{{ c.body }}</p>
-                                {% endfor %}
-                            {% endif %}
+                        <i class="comment icon"></i>
+                        <span> {{ obj.num_comments }} comments</span>
+                    </div>
+
+                    <div class="extra content">
+                        <div class="mb-5">
                         </div>
+
+                        {% if obj.comment_set.all %}
+                            {% for c in obj.comment_set.all %}
+
+                                <div class="ui segment mb-5">
+                                    <img class="ui avatar image" src={{ c.user.avatar.url }}>
+                                    <span>{{ c.user }}</span>
+                                    <div class='mt-5'>{{ c.body }}</div>
+                                </div>
+
+                            {% endfor %}
+                        {% endif %}
+
+
                         <form action="" method="POST" class='ui fluid form'>
                             {% csrf_token %}
                             <input type="hidden" name="post_id" value={{ obj.id }}>
@@ -51,10 +71,13 @@
                             </button>
                         </form>
                     </div>
+                </div>
 
-                {% endfor %}
-            </div>
-            <div class="five wide column">
+
+            {% endfor %}
+        </div>
+        <div class="five wide column">
+            <div class="ui segment">
                 {% if post_added %}
                     <div class="ui green message">Post added</div>
                 {% endif %}
