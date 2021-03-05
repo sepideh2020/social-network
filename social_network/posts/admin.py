@@ -15,4 +15,4 @@ class CommentAdmin(admin.ModelAdmin):
 
 @admin.register(Like)
 class LikeAdmin(admin.ModelAdmin):
-    list_display = ['user', 'post', 'created']
+    list_display = ['user', 'post', 'created','value']
