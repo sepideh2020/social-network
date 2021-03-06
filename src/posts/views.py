@@ -8,7 +8,6 @@ from .forms import PostModelForm, CommentModelForm
 
 def post_comment_create_and_list_view(request):
     qs = Post.objects.all()
-    p_form = PostModelForm(request.POST, request.FILES)
     # before saving form we need to have author to be assigned to the field of author in the post model so
     # we need to get the profile be request.user
 
@@ -20,7 +19,7 @@ def post_comment_create_and_list_view(request):
     profile = Profile.objects.get(user=request.user)
 
     if 'submit_p_form' in request.POST:
-        print(request.POST)
+        # print(request.POST)
         p_form = PostModelForm(request.POST, request.FILES)
 
         if p_form.is_valid():
@@ -34,7 +33,8 @@ def post_comment_create_and_list_view(request):
         if c_form.is_valid():
             instance = c_form.save(commit=False)
             instance.user = profile
-            instance.post = Post.objects.get(id=request.POST.get('post_id'))  # ???
+            instance.post = Post.objects.get(id=request.POST.get('post_id'))
+            # gets the id of the post which the user us commenting on
             instance.save()
             c_form = CommentModelForm()  # resets the form
 
