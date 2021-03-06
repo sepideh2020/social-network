@@ -47,6 +47,11 @@ def profiles_list_view(request):
 
 
 def invite_profiles_list_view(request):
+    """
+    This func invite profile
+    :param request:
+    :return:
+    """
     user = request.user
     qs = Profile.objects.get_all_profiles_to_invite(user)
 
