@@ -20,7 +20,7 @@ class ProfileManager(models.Manager):
         accepted = set([])
         for rel in qs:
             if rel.status == 'accepted':
-                # because are either receiver or sender using set prevents repetition in accepted list
+                # because are either receiver or sender using set prevents repetition in list
                 accepted.add(rel.receiver)
                 accepted.add(rel.sender)
 
