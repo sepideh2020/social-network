@@ -31,3 +31,14 @@ body {
 .mb-5 {
     margin-bottom: 5px !important;
 }
+
+.bwhite-lg{
+    background-color: transparent !important;
+}
+.bwhite-sm{
+    background-color: transparent !important;
+    width: 10px!important;
+}
+.comment-box{
+    display: none;
+}

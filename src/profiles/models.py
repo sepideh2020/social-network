@@ -2,6 +2,37 @@ from django.db import models
 from django.contrib.auth.models import User
 from .utils import get_random_code
 from django.template.defaultfilters import slugify
+from django.db.models import Q
+
+
+class ProfileManager(models.Manager):
+    def get_all_profiles_to_invite(self, sender):
+        """gets all the profiles that are available for us to invite so cases of profiles where we are already
+        in a relationship with were excluded.
+        Here the sender is ourselves and the receiver is different user with whom we dont have a relationship status
+        set to 'accepted' """
+
+        profiles = Profile.objects.all().exclude(user=sender)
+        profile = Profile.objects.get(user=sender)
+        qs = Relationship.objects.filter(Q(sender=profile) | Q(receiver=profile))
+        # grabbed all the relationships where we are the sender or receiver
+
+        accepted = set([])
+        for rel in qs:
+            if rel.status == 'accepted':
+                # because are either receiver or sender using set prevents repetition in accepted list
+                accepted.add(rel.receiver)
+                accepted.add(rel.sender)
+
+        available = [profile for profile in profiles if profile not in accepted]  # all the available profile to invite
+        print(available)
+        return available
+
+    def get_all_profiles(self, me):
+        """gets all the profiles that are in the system excluding our own"""
+
+        profiles = Profile.objects.all().exclude(user=me)
+        return profiles
 
 
 class Profile(models.Model):
@@ -21,6 +52,7 @@ class Profile(models.Model):
     # slug is base on first name and last name if they are provided otherwise slug is made out of the user
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    objects = ProfileManager()
 
     def get_friends(self):
         return self.friends.all()
@@ -78,6 +110,18 @@ STATUS_CHOICES = (
 )
 
 
+class RelationshipManager(models.Manager):
+
+    def invitation_received(self, receiver):
+        """shows all the invitation we received from different users and the receiver is going to be our selves"""
+        # we passed the profile as the receiver because the receiver is foreign key to  our profile
+        # instead of writing  a view like Relationship.objects.invitation_receiver(myprofile) we wrote a model#??
+        qs = Relationship.objects.filter(receiver=receiver, status='send')
+        # status chosen from STATUS_ChOICES
+        # if the receiver accepts the invitation it no longer exists
+        return qs
+
+
 class Relationship(models.Model):
     sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sender')
     # who sends invitation
@@ -87,6 +131,7 @@ class Relationship(models.Model):
     # whether it is sent,accepted,ignored or deleted
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+    objects = RelationshipManager()
 
     def __str__(self):
         return '{}-{}-{}'.format(self.sender, self.receiver, self.status)

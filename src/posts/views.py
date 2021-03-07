@@ -1,7 +1,10 @@
+from django.contrib import messages
 from django.shortcuts import render, redirect
+from django.urls import reverse_lazy
 from .models import Post, Like
 from profiles.models import Profile
 from .forms import PostModelForm, CommentModelForm
+from django.views.generic import UpdateView, DeleteView
 
 
 # Create your views here.
@@ -19,6 +22,8 @@ def post_comment_create_and_list_view(request):
     profile = Profile.objects.get(user=request.user)
 
     if 'submit_p_form' in request.POST:
+        # used the name of the form to understand which form was submitted
+        # by using if we understand which form was submitted
         # print(request.POST)
         p_form = PostModelForm(request.POST, request.FILES)
 
@@ -79,3 +84,38 @@ def like_unlike_post(request):
             like.save()
 
     return redirect('posts:main-post-view')
+
+
+class PostDeleteView(DeleteView):
+    """the function increase security and prevents deleting of the post by other users who knows url of a page
+       and only the author can delete the post"""
+    model = Post
+    template_name = 'posts/confirm_del.html'
+    success_url = reverse_lazy('posts:main-post-view')  # redirects to the main page
+
+    # success_url = '/posts/'
+    # it indicates once we successfully delete a post where should we be taken
+    # reverse is for function views and reverse_lazy is for class views
+
+    def get_object(self, *args, **kwargs):
+        pk = self.kwargs.get('pk')
+        obj = Post.objects.get(pk=pk)
+        if not obj.author.user == self.request.user:
+            messages.warning(self.request, 'You need to be the author of the post in order to delete it')
+        return obj
+
+
+class PostUpdateView(UpdateView):  # ??
+
+    form_class = PostModelForm
+    model = Post
+    template_name = 'posts/update.html'
+    success_url = reverse_lazy('posts:main-post-view')
+
+    def form_valid(self, form):
+        profile = Profile.objects.get(user=self.request.user)
+        if form.instance.author == profile:  # ??? chera for ?
+            return super().form_valid(form)
+        else:
+            form.add_error(None, "You need to be the author of the post in order to update it")
+            return super().form_invalid(form)
