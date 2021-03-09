@@ -115,7 +115,7 @@ def remove_from_friends(request):
         # there is two senario here whether first we requested and we want to remove that guz from
         # out friends list or first that guz requested us and now we want to remove him from our friends list
         rel = Relationship.objects.get(
-            Q(sender=sender) & Q(receiver=receiver) | Q(sender=receiver) & Q(receiver=sender)
+            (Q(sender=sender) & Q(receiver=receiver)) | (Q(sender=receiver) & Q(receiver=sender))
         )  # ????
 
         rel.delete()
