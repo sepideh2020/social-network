@@ -1,8 +1,9 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import Profile, Relationship
 from .forms import ProfileModelForm
 from django.views.generic import ListView
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 
 def my_profile_view(request):
@@ -82,3 +83,42 @@ class ProfileListView(ListView):
             # if we will be the only profile 'is_empty' will be equall to True
             context['is_empty'] = True
         return context
+
+
+def send_invitation(request):
+    """here we are the sender of invitation and we should choose the receiver,and the receiver is
+    our profile pk,based on the profile pk which we get from profiles list,we get the receiver"""
+
+    if request.method == 'POST':
+        pk = request.POST.get('profile_pk')
+        user = request.user
+        sender = Profile.objects.get(user=user)
+        receiver = Profile.objects.get(pk=pk)  # primary key
+
+        #  creating relationship
+        rel = Relationship.objects.create(sender=sender, receiver=receiver, status='send')  # ???
+        return redirect(request.META.get('HTTP_REFERER'))  # in order to stay on the same page
+    return redirect('profiles:my-profile-view')  # ??      #if we are not dealing with post request
+
+
+def remove_from_friends(request):
+    """here we dont know who is the sender and who is the receiver of the request,we have to delete
+     the relationship after getting it we have to remove the person who we dont want to fried with from
+      our friend list and also remove ourself from that person friend list"""
+
+    if request.method == 'POST':
+        pk = request.POST.get('profile_pk')
+        user = request.user
+        sender = Profile.objects.get(user=user)  # sender is us
+        receiver = Profile.objects.get(pk=pk)  # profile we want to remove from friends
+
+        # there is two senario here whether first we requested and we want to remove that guz from
+        # out friends list or first that guz requested us and now we want to remove him from our friends list
+        rel = Relationship.objects.get(
+            Q(sender=sender) & Q(receiver=receiver) | Q(sender=receiver) & Q(receiver=sender)
+        )  # ????
+
+        rel.delete()
+        return redirect(request.META.get('HTTP_REFERER'))  # ??  # in order to stay on the same page
+    return redirect('profiles:my-profile-view')  # ??      #if we are not dealing with post request
+    # in order to get rid of user from friends list we use signals,'pre_delete signals function'
