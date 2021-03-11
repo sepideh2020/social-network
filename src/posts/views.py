@@ -114,7 +114,7 @@ class PostUpdateView(UpdateView):  # ??
 
     def form_valid(self, form):
         profile = Profile.objects.get(user=self.request.user)
-        if form.instance.author == profile:  # chera for ??
+        if form.instance.author == profile:
             return super().form_valid(form)
         else:
             form.add_error(None, "You need to be the author of the post in order to update it")

@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Profile, Relationship
 from .forms import ProfileModelForm
 from django.views.generic import ListView
@@ -26,11 +26,40 @@ def my_profile_view(request):
     return render(request, 'profiles/myprofile.html', context)
 
 
+def accept_invitation(request):
+    if request.method == 'POST':
+        pk = request.POST.get('profile_pk')  # profile_pk is name of the input
+        sender = Profile.objects.get(pk=pk)  # gets tge sender by primary key
+        receiver = Profile.objects.get(user=request.user)  # gets the receiver of the invitation
+        rel = get_object_or_404(Relationship, sender=sender, receiver=receiver)  # grabs relationship
+        if rel.status == 'send':
+            rel.status = 'accepted'
+            rel.save()
+    return redirect('profiles:my-invites-view')
+
+
+def reject_invitation(request):
+    if request.method == 'POST':
+        pk = request.POST.get('profile_pk')  # profile_pk is name of the input
+        sender = Profile.objects.get(pk=pk)  # gets tge sender by primary key
+        receiver = Profile.objects.get(user=request.user)  # gets the receiver of the invitation
+        rel = get_object_or_404(Relationship, sender=sender, receiver=receiver)  # grabs relationship
+        rel.delete()
+    return redirect('profiles:my-invites-view')
+
+
 def invited_received_view(request):
     """gets all the invitations for a particular profile"""
     profile = Profile.objects.get(user=request.user)
     qs = Relationship.objects.invitation_received(profile)
-    context = {'qs': qs}
+    results = list(map(lambda x: x.sender, qs))  # here we grab the sender of invitation from qs
+    is_empty = False
+    if len(results) == 0:
+        is_empty = True  # we use is_empty in templates if it is True a message will be appear
+    context = {
+        'qs': results,
+        'is_empty': is_empty,
+    }
     return render(request, 'profiles/my_invites.html', context)
 
 
@@ -50,7 +79,7 @@ def profiles_list_view(request):
     return render(request, 'profiles/profile_list.html', context)
 
 
-class ProfileListView(ListView):
+class ProfileListView(ListView):  # ????
     """get all profiles by list view"""
     model = Profile
     template_name = 'profiles/profile_list.html'
