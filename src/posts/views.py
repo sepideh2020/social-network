@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from .models import Post, Like
@@ -19,6 +20,7 @@ def post_comment_create_and_list_view(request):
     # we used request.Files because we might send an image
     c_form = CommentModelForm()
     post_added = False
+    # handling----if post_added is True show a message
     profile = Profile.objects.get(user=request.user)
 
     if 'submit_p_form' in request.POST:
@@ -91,7 +93,7 @@ class PostDeleteView(DeleteView):
        and only the author can delete the post"""
     model = Post
     template_name = 'posts/confirm_del.html'
-    success_url = reverse_lazy('posts:main-post-view')  # redirects to the main page
+    success_url = reverse_lazy('posts:main-post-view')  # redirects to the main-post-view
 
     # success_url = '/posts/'
     # it indicates once we successfully delete a post where should we be taken
@@ -105,7 +107,7 @@ class PostDeleteView(DeleteView):
         return obj
 
 
-class PostUpdateView(UpdateView):  # ??
+class PostUpdateView(UpdateView):
 
     form_class = PostModelForm
     model = Post
@@ -114,7 +116,7 @@ class PostUpdateView(UpdateView):  # ??
 
     def form_valid(self, form):
         profile = Profile.objects.get(user=self.request.user)
-        if form.instance.author == profile:  # chera for ??
+        if form.instance.author == profile:
             return super().form_valid(form)
         else:
             form.add_error(None, "You need to be the author of the post in order to update it")

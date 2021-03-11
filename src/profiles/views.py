@@ -1,7 +1,7 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Profile, Relationship
 from .forms import ProfileModelForm
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.contrib.auth.models import User
 from django.db.models import Q
 
@@ -15,7 +15,7 @@ def my_profile_view(request):
     if request.method == 'POST':
         if form.is_valid:
             form.save()
-            confirm = True
+            confirm = True  # for update
 
     context = {
         'profile': profile,
@@ -30,7 +30,15 @@ def invited_received_view(request):
     """gets all the invitations for a particular profile"""
     profile = Profile.objects.get(user=request.user)
     qs = Relationship.objects.invitation_received(profile)
-    context = {'qs': qs}
+    results = list(map(lambda x: x.sender, qs))
+    if len(results) == 0:
+        is_empty = True
+    else:
+        is_empty = False
+    context = {
+        'qs': results,
+        'is_empty': is_empty,
+    }
     return render(request, 'profiles/my_invites.html', context)
 
 
@@ -42,12 +50,62 @@ def invite_profiles_list_view(request):
     return render(request, 'profiles/to_invite_list.html', context)
 
 
+def accept_invatation(request):
+    if request.method == "POST":
+        pk = request.POST.get('profile_pk')
+        sender = Profile.objects.get(pk=pk)
+        receiver = Profile.objects.get(user=request.user)
+        rel = get_object_or_404(Relationship, sender=sender, receiver=receiver)
+        if rel.status == 'send':
+            rel.status = 'accepted'
+            rel.save()
+    return redirect('profiles:my-invites-view')
+
+
+def reject_invatation(request):
+    if request.method == "POST":
+        pk = request.POST.get('profile_pk')
+        receiver = Profile.objects.get(user=request.user)
+        sender = Profile.objects.get(pk=pk)
+        rel = get_object_or_404(Relationship, sender=sender, receiver=receiver)
+        rel.delete()
+    return redirect('profiles:my-invites-view')
+
+
 def profiles_list_view(request):
     """get all profiles by method view"""
     user = request.user
     qs = Profile.objects.get_all_profiles(user)
     context = {'qs': qs}
     return render(request, 'profiles/profile_list.html', context)
+
+
+class ProfileDetailView(DetailView):
+    model = Profile
+    template_name = 'profiles/detail.html'
+
+    def get_object(self, slug=None):
+        slug = self.kwargs.get('slug')
+        profile = Profile.objects.get(slug=slug)
+        return profile
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = User.objects.get(username__iexact=self.request.user)
+        profile = Profile.objects.get(user=user)
+        rel_r = Relationship.objects.filter(sender=profile)
+        rel_s = Relationship.objects.filter(receiver=profile)
+        rel_receiver = []
+        rel_sender = []
+        for item in rel_r:
+            rel_receiver.append(item.receiver.user)
+        for item in rel_s:
+            rel_sender.append(item.sender.user)
+        context["rel_receiver"] = rel_receiver
+        context["rel_sender"] = rel_sender
+        context['posts'] = self.get_object().get_all_authors_posts()
+        context['len_posts'] = True if len(self.get_object().get_all_authors_posts()) > 0 else False
+        return context
 
 
 class ProfileListView(ListView):
@@ -96,9 +154,9 @@ def send_invitation(request):
         receiver = Profile.objects.get(pk=pk)  # primary key
 
         #  creating relationship
-        rel = Relationship.objects.create(sender=sender, receiver=receiver, status='send')  # ???
+        rel = Relationship.objects.create(sender=sender, receiver=receiver, status='send')
         return redirect(request.META.get('HTTP_REFERER'))  # in order to stay on the same page
-    return redirect('profiles:my-profile-view')  # ??      #if we are not dealing with post request
+    return redirect('profiles:my-profile-view')  # if access to this url directly
 
 
 def remove_from_friends(request):
@@ -116,9 +174,9 @@ def remove_from_friends(request):
         # out friends list or first that guz requested us and now we want to remove him from our friends list
         rel = Relationship.objects.get(
             (Q(sender=sender) & Q(receiver=receiver)) | (Q(sender=receiver) & Q(receiver=sender))
-        )  # ????
+        )
 
         rel.delete()
         return redirect(request.META.get('HTTP_REFERER'))  # ??  # in order to stay on the same page
-    return redirect('profiles:my-profile-view')  # ??      #if we are not dealing with post request
+    return redirect('profiles:my-profile-view')  # if we are not dealing with post request
     # in order to get rid of user from friends list we use signals,'pre_delete signals function'
