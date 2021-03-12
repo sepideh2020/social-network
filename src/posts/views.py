@@ -8,6 +8,7 @@ from .forms import PostModelForm, CommentModelForm
 from django.views.generic import UpdateView, DeleteView
 
 
+
 def post_comment_create_and_list_view(request):
     qs = Post.objects.all()
     # before saving form we need to have author to be assigned to the field of author in the post model so
