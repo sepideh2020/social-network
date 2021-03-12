@@ -11,7 +11,7 @@ class Post(models.Model):
     image = models.ImageField(upload_to='posts', validators=[FileExtensionValidator(['png', 'jpg', 'jpeg'])],
                               blank=True)
     #  validators that are allowed  are passed to FileExtensionValidator
-    liked = models.ManyToManyField(Profile,blank=True, related_name='likes')
+    liked = models.ManyToManyField(Profile, blank=True, related_name='likes')
     # related name works when there is  reverse relationship
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
