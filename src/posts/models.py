@@ -11,7 +11,9 @@ class Post(models.Model):
     image = models.ImageField(upload_to='posts', validators=[FileExtensionValidator(['png', 'jpg', 'jpeg'])],
                               blank=True)
     #  validators that are allowed  are passed to FileExtensionValidator
-    liked = models.ManyToManyField(Profile,blank=True, related_name='likes')
+    liked = models.ManyToManyField(Profile, blank=True, related_name='likes')  # all likes each post gets
+    # liked is many to many with profile this means that each user
+    # can like many posts and each post can be liked by many people
     # related name works when there is  reverse relationship
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -63,4 +65,3 @@ class Like(models.Model):
 
     def __str__(self):
         return '{}-{}-{}'.format(self.user, self.post, self.value)
-

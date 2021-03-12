@@ -1,4 +1,5 @@
 from django.contrib import messages
+from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from .models import Post, Like
@@ -6,8 +7,6 @@ from profiles.models import Profile
 from .forms import PostModelForm, CommentModelForm
 from django.views.generic import UpdateView, DeleteView
 
-
-# Create your views here.
 
 def post_comment_create_and_list_view(request):
     qs = Post.objects.all()
@@ -83,6 +82,12 @@ def like_unlike_post(request):
             post_obj.save()
             like.save()
 
+        data = {
+            'value': like.value,  # value of like can be Like or Unlike
+            'likes': post_obj.liked.all().count()  # grab all the likes and counts them
+        }
+        return JsonResponse(data, safe=False)
+
     return redirect('posts:main-post-view')
 
 
@@ -119,5 +124,3 @@ class PostUpdateView(UpdateView):  # ??
         else:
             form.add_error(None, "You need to be the author of the post in order to update it")
             return super().form_invalid(form)
-
-

@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Profile, Relationship
 from .forms import ProfileModelForm
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.contrib.auth.models import User
 from django.db.models import Q
 
@@ -56,6 +56,7 @@ def invited_received_view(request):
     is_empty = False
     if len(results) == 0:
         is_empty = True  # we use is_empty in templates if it is True a message will be appear
+
     context = {
         'qs': results,
         'is_empty': is_empty,
@@ -79,6 +80,41 @@ def profiles_list_view(request):
     return render(request, 'profiles/profile_list.html', context)
 
 
+class ProfileDetailView(DetailView):
+    model = Profile
+    template_name = 'profiles/detail.html'
+
+    def get_object(self, **kwargs):
+        """returning profile we are currently viewing"""
+        """***this method cant be commented"""
+        slug = self.kwargs.get('slug')  # here we get the object  by slug
+        profile = Profile.objects.get(slug=slug)
+        return profile
+
+    def get_context_data(self, **kwargs):
+        """ this function allows us to add some additional context to the template"""
+        context = super().get_context_data(**kwargs)
+        user = User.objects.get(username__iexact=self.request.user)  # it gets user the user
+        profile = Profile.objects.get(user=user)
+        rel_r = Relationship.objects.filter(sender=profile)
+        # relationships where we invited other users
+        rel_s = Relationship.objects.filter(receiver=profile)
+        # relationships where we are receiver of the invitation
+        rel_receiver = []
+        rel_sender = []
+        for item in rel_r:
+            rel_receiver.append(item.receiver.user)
+        for item in rel_s:
+            rel_sender.append(item.sender.user)
+        context["rel_receiver"] = rel_receiver
+        context["rel_sender"] = rel_sender
+        context['is_empty'] = False
+        context["posts"] = self.get_object().get_all_authors_posts()
+        context['len_posts'] = True if len(self.get_object().get_all_authors_posts()) > 0 else False
+        # if there are some posts we will return True and if there arent any we will return false
+        return context
+
+
 class ProfileListView(ListView):  # ????
     """get all profiles by list view"""
     model = Profile
@@ -90,7 +126,7 @@ class ProfileListView(ListView):  # ????
         return qs
 
     def get_context_data(self, **kwargs):
-        """this function allows us to some additional context to the template"""
+        """this function allows us to add some additional context to the template"""
 
         context = super().get_context_data(**kwargs)
         user = User.objects.get(username__iexact=self.request.user)  # it gets user the user
