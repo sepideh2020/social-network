@@ -4,8 +4,10 @@ from .forms import ProfileModelForm
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.models import User
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
-
+@login_required()
 def my_profile_view(request):
     profile = Profile.objects.get(user=request.user)
     form = ProfileModelForm(request.POST or None, request.FILES or None, instance=profile)
@@ -25,7 +27,7 @@ def my_profile_view(request):
 
     return render(request, 'profiles/myprofile.html', context)
 
-
+@login_required()
 def accept_invitation(request):
     if request.method == 'POST':
         pk = request.POST.get('profile_pk')  # profile_pk is name of the input
@@ -37,7 +39,7 @@ def accept_invitation(request):
             rel.save()
     return redirect('profiles:my-invites-view')
 
-
+@login_required()
 def reject_invitation(request):
     if request.method == 'POST':
         pk = request.POST.get('profile_pk')  # profile_pk is name of the input
@@ -47,7 +49,7 @@ def reject_invitation(request):
         rel.delete()
     return redirect('profiles:my-invites-view')
 
-
+@login_required()
 def invited_received_view(request):
     """gets all the invitations for a particular profile"""
     profile = Profile.objects.get(user=request.user)
@@ -63,7 +65,7 @@ def invited_received_view(request):
     }
     return render(request, 'profiles/my_invites.html', context)
 
-
+@login_required()
 def invite_profiles_list_view(request):
     """profiles list available to invite"""
     user = request.user
@@ -71,7 +73,7 @@ def invite_profiles_list_view(request):
     context = {'qs': qs}
     return render(request, 'profiles/to_invite_list.html', context)
 
-
+@login_required()
 def profiles_list_view(request):
     """get all profiles by method view"""
     user = request.user
@@ -80,16 +82,16 @@ def profiles_list_view(request):
     return render(request, 'profiles/profile_list.html', context)
 
 
-class ProfileDetailView(DetailView):
+class ProfileDetailView(LoginRequiredMixin,DetailView):
     model = Profile
     template_name = 'profiles/detail.html'
 
-    def get_object(self, **kwargs):
-        """returning profile we are currently viewing"""
-        """***this method cant be commented"""
-        slug = self.kwargs.get('slug')  # here we get the object  by slug
-        profile = Profile.objects.get(slug=slug)
-        return profile
+    # def get_object(self, **kwargs):
+    #     """returning profile we are currently viewing"""
+    #     """***this method cant be commented"""
+    #     slug = self.kwargs.get('slug')  # here we get the object  by slug
+    #     profile = Profile.objects.get(slug=slug)
+    #     return profile
 
     def get_context_data(self, **kwargs):
         """ this function allows us to add some additional context to the template"""
@@ -115,7 +117,7 @@ class ProfileDetailView(DetailView):
         return context
 
 
-class ProfileListView(ListView):  # ????
+class ProfileListView(LoginRequiredMixin,ListView):  # ????
     """get all profiles by list view"""
     model = Profile
     template_name = 'profiles/profile_list.html'
@@ -149,7 +151,7 @@ class ProfileListView(ListView):  # ????
             context['is_empty'] = True
         return context
 
-
+@login_required()
 def send_invitation(request):
     """here we are the sender of invitation and we should choose the receiver,and the receiver is
     our profile pk,based on the profile pk which we get from profiles list,we get the receiver"""
@@ -165,7 +167,7 @@ def send_invitation(request):
         return redirect(request.META.get('HTTP_REFERER'))  # in order to stay on the same page
     return redirect('profiles:my-profile-view')  # ??      #if we are not dealing with post request
 
-
+@login_required()
 def remove_from_friends(request):
     """here we dont know who is the sender and who is the receiver of the request,we have to delete
      the relationship after getting it we have to remove the person who we dont want to fried with from

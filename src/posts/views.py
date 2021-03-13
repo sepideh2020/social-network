@@ -6,9 +6,11 @@ from .models import Post, Like
 from profiles.models import Profile
 from .forms import PostModelForm, CommentModelForm
 from django.views.generic import UpdateView, DeleteView
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-
+@login_required()
 def post_comment_create_and_list_view(request):
     qs = Post.objects.all()
     # before saving form we need to have author to be assigned to the field of author in the post model so
@@ -53,7 +55,7 @@ def post_comment_create_and_list_view(request):
     }
     return render(request, 'posts/main.html', context)
 
-
+@login_required()
 def like_unlike_post(request):
     user = request.user  # user that is logged in
     if request.method == 'POST':
@@ -92,7 +94,7 @@ def like_unlike_post(request):
     return redirect('posts:main-post-view')
 
 
-class PostDeleteView(DeleteView):
+class PostDeleteView(LoginRequiredMixin,DeleteView):
     """the function increase security and prevents deleting of the post by other users who knows url of a page
        and only the author can delete the post"""
     model = Post
@@ -110,8 +112,7 @@ class PostDeleteView(DeleteView):
             messages.warning(self.request, 'You need to be the author of the post in order to delete it')
         return obj
 
-
-class PostUpdateView(UpdateView):  # ??
+class PostUpdateView(LoginRequiredMixin,UpdateView):  # ??
 
     form_class = PostModelForm
     model = Post
