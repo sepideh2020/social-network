@@ -8,12 +8,14 @@ from .views import (my_profile_view,
                     accept_invatation,
                     reject_invatation,
                     ProfileDetailView,
+                    autocomplete,
                     )
 
 app_name = 'profiles'
 
 urlpatterns = [
     path('', ProfileListView.as_view(), name='all-profiles-view'),
+    path('search/', autocomplete, name='search-view'),
     path('myprofile/', my_profile_view, name='my-profile-view'),
     path('my-invites/', invited_received_view, name='my-invites-view'),  # who invite me
     path('to-invite/', invite_profiles_list_view, name='invite-profiles-view'),

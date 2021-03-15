@@ -1,3 +1,5 @@
+import json
+
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Profile, Relationship
@@ -191,5 +193,15 @@ def remove_from_friends(request):
         return redirect(request.META.get('HTTP_REFERER'))  # ??  # in order to stay on the same page
     return redirect('profiles:my-profile-view')  # if we are not dealing with post request
     # in order to get rid of user from friends list we use signals,'pre_delete signals function'
+
+
+def autocomplete(request):
+    if 'term' in request.GET:
+        qs = Profile.objects.filter(first_name__icontains=request.GET.get('term'))
+        titles = list()
+        for person in qs:
+            titles.append(person.first_name)
+        return JsonResponse(titles, safe=False)
+    return render(request, 'profiles/search.html')
 
 
