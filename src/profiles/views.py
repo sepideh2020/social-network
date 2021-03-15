@@ -1,3 +1,4 @@
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Profile, Relationship
 from .forms import ProfileModelForm
@@ -190,3 +191,5 @@ def remove_from_friends(request):
         return redirect(request.META.get('HTTP_REFERER'))  # ??  # in order to stay on the same page
     return redirect('profiles:my-profile-view')  # if we are not dealing with post request
     # in order to get rid of user from friends list we use signals,'pre_delete signals function'
+
+

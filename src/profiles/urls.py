@@ -22,4 +22,5 @@ urlpatterns = [
     path('my-invites/accept/', accept_invatation, name='accept-invite'),
     path('my-invites/reject/', reject_invatation, name='reject-invite'),
     path('<slug>/', ProfileDetailView.as_view(), name='profile-detail-view'),
+
 ]
