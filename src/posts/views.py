@@ -1,13 +1,15 @@
+from django.conf import settings
 from django.contrib import messages
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
-from .models import Post, Like
+from .models import Post, Like, Comment
 from profiles.models import Profile
 from .forms import PostModelForm, CommentModelForm
 from django.views.generic import UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.shortcuts import get_object_or_404
 
 
 @login_required()
@@ -55,6 +57,18 @@ def post_comment_create_and_list_view(request):
     }
     return render(request, 'posts/main.html', context)
 
+
+def CommentDeleteView(request, id):
+    obj = get_object_or_404(Comment, id=id)
+    if request == "POST":
+        obj.delete()
+        return redirect('posts/main.html')
+    context = {
+        "object": obj
+    }
+    return render(request, 'posts/main.html', context)
+
+
 @login_required()
 def like_unlike_post(request):
     user = request.user  # user that is logged in
@@ -94,7 +108,7 @@ def like_unlike_post(request):
     return redirect('posts:main-post-view')
 
 
-class PostDeleteView(LoginRequiredMixin,DeleteView):
+class PostDeleteView(LoginRequiredMixin, DeleteView):
     """the function increase security and prevents deleting of the post by other users who knows url of a page
        and only the author can delete the post"""
     model = Post
@@ -112,7 +126,8 @@ class PostDeleteView(LoginRequiredMixin,DeleteView):
             messages.warning(self.request, 'You need to be the author of the post in order to delete it')
         return obj
 
-class PostUpdateView(LoginRequiredMixin,UpdateView):  # ??
+
+class PostUpdateView(LoginRequiredMixin, UpdateView):
 
     form_class = PostModelForm
     model = Post
@@ -121,7 +136,7 @@ class PostUpdateView(LoginRequiredMixin,UpdateView):  # ??
 
     def form_valid(self, form):
         profile = Profile.objects.get(user=self.request.user)
-        if form.instance.author == profile:
+        if form.instance.author == profile:   #one instance of post
             return super().form_valid(form)
         else:
             form.add_error(None, "You need to be the author of the post in order to update it")

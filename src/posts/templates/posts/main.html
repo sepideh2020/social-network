@@ -75,6 +75,13 @@
                                         <img class="ui avatar image" src={{ c.user.avatar.url }}>
                                         <span>{{ c.user }}</span>
                                         <div class='mt-5'>{{ c.body }}</div>
+
+                                        <form action="{% url 'profiles:remove-friend' %}" method="POST">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="profile_pk" value={{ object.pk }}>
+                                            <button type="submit" class="ui basic button">Delete
+                                            </button>
+                                        </form>
                                     </div>
 
                                 {% endfor %}
@@ -149,9 +156,9 @@
                             res = trimCount - 1
                         } else {
                             $(`.like-btn${post_id}`).text('Unlike')
-                              res = trimCount + 1
+                            res = trimCount + 1
                         }
-                         $(`.like-count${post_id}`).text(res)
+                        $(`.like-count${post_id}`).text(res)
                     },
                     error: function (response) {
                         console.log('error', response)
