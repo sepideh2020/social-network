@@ -31,6 +31,9 @@ body {
 .mb-5 {
     margin-bottom: 5px !important;
 }
+.w-big{
+    width: 200px !important;
+}
 
 .w-big{
     width: 200px!important;

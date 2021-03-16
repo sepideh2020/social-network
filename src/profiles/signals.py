@@ -6,7 +6,7 @@ from .models import Profile, Relationship
 
 # is used for creating profile automatically
 @receiver(post_save, sender=User)
-def post_save_create_profile(sender, instance, created, **kwargs):  # creates is a boolean value
+def post_save_create_profile(sender, instance, created, **kwargs):  # created is a boolean value
     if created:
         Profile.objects.create(user=instance)
 
@@ -27,7 +27,7 @@ def post_save_add_friends(sender, instance, created, **kwargs):
 def pre_delete_remove_from_friends(sender, instance, **kwargs):
     """before the relationship get deleted,it is removed from friends"""
     # here sender is instance of Relationship
-    sender = instance.sender  ##???
+    sender = instance.sender
     receiver = instance.receiver
     sender.friends.remove(receiver.user)
     receiver.friends.remove(sender.user)

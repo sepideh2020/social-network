@@ -1,5 +1,5 @@
-from django.conf import settings
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
@@ -9,10 +9,10 @@ from .forms import PostModelForm, CommentModelForm
 from django.views.generic import UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import get_object_or_404
 
 
-@login_required()
+# Create your views here.
+@login_required
 def post_comment_create_and_list_view(request):
     qs = Post.objects.all()
     # before saving form we need to have author to be assigned to the field of author in the post model so
@@ -23,6 +23,7 @@ def post_comment_create_and_list_view(request):
     # we used request.Files because we might send an image
     c_form = CommentModelForm()
     post_added = False
+    # handling----if post_added is True show a message
     profile = Profile.objects.get(user=request.user)
 
     if 'submit_p_form' in request.POST:
@@ -58,18 +59,7 @@ def post_comment_create_and_list_view(request):
     return render(request, 'posts/main.html', context)
 
 
-def CommentDeleteView(request, id):
-    obj = get_object_or_404(Comment, id=id)
-    if request == "POST":
-        obj.delete()
-        return redirect('posts/main.html')
-    context = {
-        "object": obj
-    }
-    return render(request, 'posts/main.html', context)
-
-
-@login_required()
+@login_required
 def like_unlike_post(request):
     user = request.user  # user that is logged in
     if request.method == 'POST':
@@ -99,12 +89,6 @@ def like_unlike_post(request):
             post_obj.save()
             like.save()
 
-        data = {
-            'value': like.value,  # value of like can be Like or Unlike
-            'likes': post_obj.liked.all().count()  # grab all the likes and counts them
-        }
-        return JsonResponse(data, safe=False)
-
     return redirect('posts:main-post-view')
 
 
@@ -113,7 +97,7 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
        and only the author can delete the post"""
     model = Post
     template_name = 'posts/confirm_del.html'
-    success_url = reverse_lazy('posts:main-post-view')  # redirects to the main page
+    success_url = reverse_lazy('posts:main-post-view')  # redirects to the main-post-view
 
     # success_url = '/posts/'
     # it indicates once we successfully delete a post where should we be taken
@@ -128,7 +112,6 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
 
 
 class PostUpdateView(LoginRequiredMixin, UpdateView):
-
     form_class = PostModelForm
     model = Post
     template_name = 'posts/update.html'
@@ -136,8 +119,27 @@ class PostUpdateView(LoginRequiredMixin, UpdateView):
 
     def form_valid(self, form):
         profile = Profile.objects.get(user=self.request.user)
-        if form.instance.author == profile:   #one instance of post
+        if form.instance.author == profile:
             return super().form_valid(form)
         else:
             form.add_error(None, "You need to be the author of the post in order to update it")
             return super().form_invalid(form)
+
+
+class CommentDeleteView(LoginRequiredMixin, DeleteView):
+    """the function increase security and prevents deleting of the post by other users who knows url of a page
+       and only the author can delete the post"""
+    model = Comment
+    template_name = 'posts/confirm_del.html'
+    success_url = reverse_lazy('posts:main-post-view')  # redirects to the main-post-view
+
+    # success_url = '/posts/'
+    # it indicates once we successfully delete a post where should we be taken
+    # reverse is for function views and reverse_lazy is for class views
+
+    def get_object(self, *args, **kwargs):
+        pk = self.kwargs.get('pk')
+        obj = Comment.objects.get(pk=pk)
+        return obj
+
+

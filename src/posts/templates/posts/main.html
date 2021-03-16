@@ -13,11 +13,10 @@
                             <div class="ui grid">
                                 <div class="row">
                                     {% ifequal request.user obj.author.user %}
-                                        {#   if the request matches the post author user we see update and delete button      #}
                                         <a href="{% url 'posts:post-update' obj.pk %}">
                                             <button class="ui button bwhite-lg ">Update</button>
                                         </a>
-                                        <a href="{% url 'posts:post-delete'  obj.pk %}">
+                                        <a href="{% url 'posts:post-delete' obj.pk %}">
                                             <button class="ui button bwhite-lg ">Delete</button>
                                         </a>
                                     {% endifequal %}
@@ -36,11 +35,10 @@
                     <div class="content">
                         <p> {{ obj.content }} </p>
                         <div class="right floated">
-                            <form action="{% url 'posts:like-post-view' %}" method="POST" class="like-form"
-                                  id="{{ obj.id }}">
+                            <form action="{% url 'posts:like-post-view' %}" method="POST" class='like-form'
+                                  id='{{ obj.id }}'>
                                 {% csrf_token %}
                                 <input type="hidden" name="post_id" value={{ obj.id }}>
-                                {#   we can access to the id of the post in the view.py by input name which is post_id #}
 
                                 <button type="submit" class="ui button like-btn{{ obj.id }}">
                                     {% if profile not in obj.liked.all %}
@@ -51,7 +49,7 @@
                                 </button>
                                 <div class="ui grid">
                                     <div class="column">
-                                        <div class="like-count{{ obj.id }}"> {{ obj.num_likes }}</div>
+                                        <div class="like-count{{ obj.id }}"> {{ obj.num_likes }} </div>
                                     </div>
                                     <div class="column">
                                         likes
@@ -75,13 +73,11 @@
                                         <img class="ui avatar image" src={{ c.user.avatar.url }}>
                                         <span>{{ c.user }}</span>
                                         <div class='mt-5'>{{ c.body }}</div>
-
-                                        <form action="{% url 'profiles:remove-friend' %}" method="POST">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="profile_pk" value={{ object.pk }}>
-                                            <button type="submit" class="ui basic button">Delete
-                                            </button>
-                                        </form>
+                                        {% if request.user == obj.author.user or c.user.user == request.user %}
+                                            <a href="{% url 'posts:comment-delete' c.pk %}">
+                                                <button class="ui button bwhite-lg ">Delete</button>
+                                            </a>
+                                        {% endif %}
                                     </div>
 
                                 {% endfor %}
@@ -94,6 +90,7 @@
                             {{ c_form }}
                             <button type="submit" name="submit_c_form" class="ui primary button mt-5 w-full">Send
                             </button>
+
                         </form>
                     </div>
                 </div>
@@ -132,13 +129,14 @@
 
             $('.like-form').submit(function (e) {
                 e.preventDefault()
-                {#preventing from refreshing the page#}
+
                 const post_id = $(this).attr('id')
-                {# grab the attribute by id#}
+
                 const likeText = $(`.like-btn${post_id}`).text()
-                {#    inject post id#}
                 const trim = $.trim(likeText)
+
                 const url = $(this).attr('action')
+
                 let res;
                 const likes = $(`.like-count${post_id}`).text()
                 const trimCount = parseInt(likes)
@@ -158,6 +156,7 @@
                             $(`.like-btn${post_id}`).text('Unlike')
                             res = trimCount + 1
                         }
+
                         $(`.like-count${post_id}`).text(res)
                     },
                     error: function (response) {

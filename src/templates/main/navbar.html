@@ -4,6 +4,8 @@
 {% url 'profiles:my-invites-view' as path_to_my_invites %}
 {% url 'profiles:invite-profiles-view' as path_to_invites %}
 {% url 'profiles:all-profiles-view' as path_to_all_profiles %}
+{% url 'profiles:search-view' as path_to_search_friend %}
+
 
 <div class="ui inverted menu nav mb-7">
     <div class="ui container">
@@ -39,14 +41,10 @@
                     </div>
                 </div>
                 <div class="item">
-                    <form action="" method="GET">
-                        <div class="ui action left icon input">
-                            <input class="prompt" type="text" name='q' placeholder="name of a friend...">
-                            <i class="search icon"></i>
-                            <button type='submit' class="ui button">Search</button>
-                        </div>
-                    </form>
+                    <a href="{{ path_to_search_friend }}"><i class="big search icon"></i></a>
                 </div>
+
+
 
                 <a href="{{ path_to_my_profile }}"
                    class="{% if request.path == path_to_my_profile %}active{% endif %} item">
