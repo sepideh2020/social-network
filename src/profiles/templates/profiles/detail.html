@@ -30,7 +30,7 @@ profile detail
                 </div>
             </div>
 
-            {% if object.user not in rel_receiver and object.user not in rel_sender %}
+            {% if object.user not in rel_receiver and object.user not in rel_sender and object.user != request.user %}
                 <form action="{% url 'profiles:send-invite' %}" method="POST">
                     {% csrf_token %}
                     <input type="hidden" name="profile_pk" value={{object.pk}}>
