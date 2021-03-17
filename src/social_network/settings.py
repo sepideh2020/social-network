@@ -10,9 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
+import profile
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
@@ -52,7 +55,7 @@ ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_UNIQUE = True
 if DEBUG:
-    EMAIL_BACKEND='django.code.mail.backends.dummy.EmailBackend'
+    EMAIL_BACKEND = 'django.code.mail.backends.dummy.EmailBackend'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -82,10 +85,20 @@ TEMPLATES = [
         },
     },
 ]
+
 AUTHENTICATION_BACKENDS = [
+    ###############
+    # 'userauth.backends.PhoneNumberBackend',
+    # Needed to login by username in Django admin, regardless of `allauth`
     'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
     'allauth.account.auth_backends.AuthenticationBackend',
+    'profiles.authentication.EmailAuthentication',
+
 ]
+USERNAME_FIELD = 'identifier'  ##
+
 WSGI_APPLICATION = 'social_network.wsgi.application'
 
 # Database
@@ -118,6 +131,9 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
+
+
+# AUTH_USER_MODEL = 'profiles.AbsUser'  ###
 
 LANGUAGE_CODE = 'en-us'
 

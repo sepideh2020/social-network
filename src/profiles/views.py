@@ -1,8 +1,9 @@
 import json
 
+from django.contrib.auth import forms
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Profile, Relationship
+from .models import Profile, Relationship, AbsUser
 from .forms import ProfileModelForm
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.models import User
@@ -102,7 +103,7 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(username__iexact=self.request.user)
+        user = AbsUser.objects.get(username__iexact=self.request.user)
         profile = Profile.objects.get(user=user)
         rel_r = Relationship.objects.filter(sender=profile)
         rel_s = Relationship.objects.filter(receiver=profile)
@@ -133,7 +134,7 @@ class ProfileListView(LoginRequiredMixin, ListView):
         """this function allows us to some additional context to the template"""
 
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(username__iexact=self.request.user)  # it gets user the user
+        user = AbsUser.objects.get(username__iexact=self.request.user)  # it gets user the user
         profile = Profile.objects.get(user=user)
         rel_r = Relationship.objects.filter(sender=profile)
         # relationships where we invited other users
@@ -203,5 +204,6 @@ def autocomplete(request):
             titles.append(person.first_name)
         return JsonResponse(titles, safe=False)
     return render(request, 'profiles/search.html')
+
 
 

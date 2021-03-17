@@ -4,24 +4,24 @@
 {% endblock title %}
 
 {% block content %}
-        <div class="ui icon center input centered">
-            <input class="prompt" type="text" name="email" id="email" placeholder="Search friends...">
-        </div>
+    <div class="ui icon center input centered">
+        <input class="prompt" type="text" name="email" id="email" placeholder="Search friends...">
+    </div>
 
-        <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
-        <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 
-        <script>
-            $(function () {
-                $("#email").autocomplete({
-                    source: '{% url 'profiles:search-view' %}',
-                    minLength: 1
-                });
+    <script>
+        $(function () {
+            $("#email").autocomplete({
+                source: '{% url 'profiles:search-view' %}',
+                minLength: 1
             });
-            $(document).on('click','#ui-id-1 li', function (){
-                var div=$(this).find('div').text();
-                window.location.href="{% url 'profiles:profile-detail-view' 0 %}".replace(0,div);
-            });
-        </script>
+        });
+        $(document).on('click', '#ui-id-1 li', function () {
+            var div = $(this).find('div').text();
+            window.location.href = "{% url 'profiles:profile-detail-view' 0 %}".replace(0, div);
+        });
+    </script>
 
 {% endblock content %}

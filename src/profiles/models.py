@@ -1,10 +1,25 @@
+from django.contrib.auth.base_user import AbstractBaseUser
+from django.core.validators import RegexValidator
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, AbstractUser
 from django.shortcuts import reverse
 
 from .utils import get_random_code
 from django.template.defaultfilters import slugify
 from django.db.models import Q
+
+
+class AbsUser(User):
+    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$',
+                                 message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
+    phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=True)  # validators should be a list
+
+
+
+
+
+
+    ###########################################
 
 
 class ProfileManager(models.Manager):
@@ -40,7 +55,7 @@ class ProfileManager(models.Manager):
 class Profile(models.Model):
     first_name = models.CharField(max_length=200, blank=True)
     last_name = models.CharField(max_length=200, blank=True)
-    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(AbsUser, on_delete=models.CASCADE)
     # every user will have his own profile/every time the user is deleted the profile is deleted as well
     bio = models.TextField(default='no bio ...', max_length=300)
     email = models.EmailField(max_length=200, blank=True)
@@ -49,7 +64,7 @@ class Profile(models.Model):
     # install pillow
     # create media_root
     # find avatar.png
-    friends = models.ManyToManyField(User, blank=True, related_name='friends')
+    friends = models.ManyToManyField(AbsUser, blank=True, related_name='friends')
     slug = models.SlugField(unique=True, blank=True)
     # slug is base on first name and last name if they are provided otherwise slug is made out of the user
     updated = models.DateTimeField(auto_now=True)
