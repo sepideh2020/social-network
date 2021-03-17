@@ -9,6 +9,7 @@ from .models import Profile, Relationship, AbsUser
 def post_save_create_profile(sender, instance, created, **kwargs):  # created is a boolean value
     if created:
         Profile.objects.create(user=instance)
+        print(instance.email)
 
 
 # is used for adding friends automatically

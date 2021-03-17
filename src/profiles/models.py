@@ -58,6 +58,13 @@ class Profile(models.Model):
     user = models.OneToOneField(AbsUser, on_delete=models.CASCADE)
     # every user will have his own profile/every time the user is deleted the profile is deleted as well
     bio = models.TextField(default='no bio ...', max_length=300)
+    GENDER_CHOICE = (
+        ('M', 'Male'),
+        ('F', 'Female'),
+        ('O', 'Other')
+
+    )
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICE, null=True)
     email = models.EmailField(max_length=200, blank=True)
     country = models.CharField(max_length=200, blank=True)
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
