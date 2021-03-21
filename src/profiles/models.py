@@ -1,43 +1,42 @@
-from django.core.mail import send_mail
+from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin, AbstractUser
 from django.db import models
-from django.contrib.auth.models import AbstractUser, PermissionsMixin
 from django.db.models import Q
 from django.shortcuts import reverse
-from social_network import settings
-# from .managers import UserManager
-from .utils import get_random_code
 from django.template.defaultfilters import slugify
-from django.contrib.auth.base_user import AbstractBaseUser
-from .validators import mobile_validator, mobile_len_validator, UnicodeUsernameValidator
+from django.utils.translation import ugettext_lazy as _
+from social_network import settings
+from .utils import get_random_code
 
 
+class CustomUserManager(BaseUserManager):
+    """Define a model manager for User model with no username field."""
+    use_in_migrations = True
 
-class User(AbstractUser):
-    """
-    An abstract base class implementing a fully featured User model with
-    admin-compliant permissions.
+    def _create_user(self, user_name, password, **extra_fields):
+        user = self.model(user_name=user_name, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
 
-    Username and password are required. Other fields are optional.
-    """
+    def create_user(self, user_name, password=None, **extra_fields):
+        extra_fields.setdefault('is_superuser', False)
+        extra_fields.setdefault('is_staff', False)
+        return self._create_user(user_name, password, **extra_fields)
 
-    phone_number = models.CharField(max_length=13, validators=[mobile_validator, mobile_len_validator], unique=True)
+    def create_superuser(self, user_name, password, **extra_fields):
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_staff', True)
+        return self._create_user(user_name, password, **extra_fields)
 
-
-    REQUIRED_FIELDS = ['phone_number','email']
-
-
-
-
-class ProfileManager(models.Manager):
     def get_all_profiles_to_invite(self, sender):
         """gets all the profiles that are available for us to invite so cases of profiles where we are already
         in a relationship with were excluded.
         Here the sender is ourselves and the receiver is different user with whom we dont have a relationship status
         set to 'accepted' """
 
-        profiles = Profile.objects.all().exclude(user=sender)
-        profile = Profile.objects.get(user=sender)
-
+        profiles = CustomUser.objects.all().exclude(id__exact=sender.id)
+        profile = CustomUser.objects.get(id__exact=sender.id)
         qs = Relationship.objects.filter(Q(sender=profile) | Q(receiver=profile))
         # grabbed all the relationships where we are the sender or receiver
 
@@ -48,46 +47,50 @@ class ProfileManager(models.Manager):
                 accepted.add(rel.receiver)
                 accepted.add(rel.sender)
 
-        available = [profile for profile in profiles if profile not in accepted]  # all the available profile to invite
+        available = [profile for profile in profiles if
+                     profile not in accepted]  # all the available profile to invite
         print(available)
         return available
 
     def get_all_profiles(self, me):
         """gets all the profiles that are in the system excluding our own"""
 
-        profiles = Profile.objects.all().exclude(user=me)
+        profiles = CustomUser.objects.all().exclude(id__exact=me.id)
         return profiles
 
 
-
-class Profile(models.Model):
-    first_name = models.CharField(max_length=200, blank=True)
-    last_name = models.CharField(max_length=200, blank=True)
-    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    # every user will have his own profile/every time the user is deleted the profile is deleted as well
-    bio = models.TextField(default='no bio ...', max_length=300)
+class CustomUser(AbstractBaseUser, PermissionsMixin):
+    """
+    this class create a new user
+    """
+    first_name = models.CharField(max_length=100)
+    last_name = models.CharField(max_length=100)
+    user_name = models.CharField(_('Username'), max_length=100, unique=True)
+    avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
+    phone_number = models.CharField(_('Phone number'), max_length=11, blank=True, null=True, unique=True)
     GENDER_CHOICE = (
         ('M', 'Male'),
         ('F', 'Female'),
         ('O', 'Other')
-
     )
     gender = models.CharField(max_length=6, choices=GENDER_CHOICE, null=True)
-    email = models.EmailField(max_length=200, blank=True)
+    bio = models.TextField(default='no bio ...', max_length=300)
     country = models.CharField(max_length=200, blank=True)
-    avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
-    # install pillow
-    # create media_root
-    # find avatar.png
-    friends = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='friends')
+    website = models.CharField(_('Website'), blank=True, max_length=150)
+    email = models.EmailField("email address", blank=True, null=True, unique=True)
     slug = models.SlugField(unique=True, blank=True)
-    # slug is base on first name and last name if they are provided otherwise slug is made out of the user
+    is_active = models.BooleanField(_('active'), default=True)
+    is_superuser = models.BooleanField(_('superuser'), default=False)
+    is_staff = models.BooleanField(_('staff'), default=False)
+    friends = models.ManyToManyField('self', blank=True, related_name='friends')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-    objects = ProfileManager()
+    USERNAME_FIELD = 'user_name'
+    REQUIRED_FIELDS = []
+    objects = CustomUserManager()
 
     def __str__(self):
-        return '{}-{}'.format(self.user.username, self.created.strftime(('%d-%m-%Y')))
+        return '{}-{}'.format(self.user_name, self.created.strftime('%d-%m-%Y'))
 
     def get_absolute_url(self):
         return reverse("profiles:profile-detail-view", kwargs={"slug": self.slug})
@@ -123,8 +126,7 @@ class Profile(models.Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__initial_first_name = self.first_name
-        self.__initial_last_name = self.last_name
+        self.__initial_user_name = self.user_name
 
     def save(self, *args, **kwargs):
         """this function is for making slug for users , Ones whose first and last name are similar
@@ -133,19 +135,13 @@ class Profile(models.Model):
         defined at utils.py"""
         ex = False
         to_slug = self.slug
-        if self.first_name != self.__initial_first_name or self.last_name != self.__initial_last_name or self.slug == "":
-            if self.first_name and self.last_name:
-                to_slug = slugify(str(self.first_name) + " " + str(self.last_name))
-                ex = Profile.objects.filter(slug=to_slug).exists()
-                while ex:
-                    to_slug = slugify(to_slug + " " + str(get_random_code()))
-                    ex = Profile.objects.filter(slug=to_slug).exists()
-            else:
-                to_slug = str(self.user)
+        to_slug = slugify(str(self.user_name))
+        ex = CustomUser.objects.filter(slug=to_slug).exists()
+        while ex:
+            to_slug = slugify(to_slug + " " + str(get_random_code()))
+            ex = CustomUser.objects.filter(slug=to_slug).exists()
         self.slug = to_slug
         super().save(*args, **kwargs)
-
-
 STATUS_CHOICES = (
     ('send', 'send'),
     ('accepted', 'accepted')
@@ -157,17 +153,17 @@ class RelationshipManager(models.Manager):
     def invitation_received(self, receiver):
         """shows all the invitation we received from different users and the receiver is going to be our selves"""
         # we passed the profile as the receiver because the receiver is foreign key to  our profile
-        # instead of writing  a view like Relationship.objects.invitation_receiver(myprofile) we wrote a model#??
+        # instead of writing  a view like Relationship.objects.invitation_receiver(my_profile) we wrote a model#??
         qs = Relationship.objects.filter(receiver=receiver, status='send')
-        # status chosen from STATUS_ChOICES
+        # status chosen from STATUS_CHOICES
         # if the receiver accepts the invitation it no longer exists
         return qs
 
 
 class Relationship(models.Model):
-    sender = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='sender')
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='sender')
     # who sends invitation
-    receiver = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='receiver')
+    receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='receiver')
     # who receives the invitation
     status = models.CharField(max_length=8, choices=STATUS_CHOICES)
     # whether it is sent,accepted,ignored or deleted

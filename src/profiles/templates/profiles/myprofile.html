@@ -45,7 +45,7 @@
         {% if confirm %}
             <div class="ui green message">Your profile has been updated</div>
         {% endif %}
-        <h3>my profile: {{ request.user }}</h3>
+        <h3>my profile: {{ request.user.user_name }}</h3>
         <div class="ui grid">
             <div class='row'>
                 <div class='six wide column'>
@@ -59,7 +59,7 @@
                         <tbody>
                         <tr>
                             <td>username</td>
-                            <td>{{ profile.user }}</td>
+                            <td>{{ profile.user_name }}</td>
                         </tr>
                         <tr>
                             <td>first name</td>
@@ -82,7 +82,7 @@
                             <td>
                                 <ul>
                                     {% for friend in profile.get_friends %}
-                                        <a href="{% url 'profiles:profile-detail-view'  friend %}"><li>{{ friend }}</li></a>
+                                        <a href="{% url 'profiles:profile-detail-view'  friend.slug %}"><li>{{ friend }}</li></a>
                                     {% endfor %}
                                 </ul>
                             </td>
@@ -124,7 +124,7 @@
 
                 </div>
                 <img class="ui avatar image" src={{ post.author.avatar.url }}>
-                {{ post.author.user }} - {{ post.created|timesince }} ago
+                {{ post.author.user_name }} - {{ post.created|timesince }} ago
             </div>
             <div class="ui fluid image">
                 {% if post.image %}
@@ -161,7 +161,6 @@
             </div>
             <div class="extra content">
                 <div class="mb-5">
-
                 </div>
                 <button class="cmt_btn ui button mb-5">show / hide comments</button>
                 <div class="comment-box">

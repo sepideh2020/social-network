@@ -1,7 +1,11 @@
 from django.contrib import admin
-from .models import Profile, Relationship, User
+from .models import CustomUser, Relationship
 
 # Register your models here.
-admin.site.register(Profile)
+admin.site.register(CustomUser)
 admin.site.register(Relationship)
-admin.site.register(User)
+
+
+
+
+

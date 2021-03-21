@@ -2,7 +2,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from .models import Post, Like, Comment
-from profiles.models import Profile
+from profiles.models import CustomUser
 from .forms import PostModelForm, CommentModelForm
 from django.views.generic import UpdateView, DeleteView
 from django.contrib.auth.decorators import login_required
@@ -22,7 +22,7 @@ def post_comment_create_and_list_view(request):
     c_form = CommentModelForm()
     post_added = False
     # handling----if post_added is True show a message
-    profile = Profile.objects.get(user=request.user)
+    profile = CustomUser.objects.get(id__exact=request.user.id)
 
     if 'submit_p_form' in request.POST:
         # used the name of the form to understand which form was submitted
@@ -63,7 +63,7 @@ def like_unlike_post(request):
     if request.method == 'POST':
         post_id = request.POST.get('post_id')
         post_obj = Post.objects.get(id=post_id)
-        profile = Profile.objects.get(user=user)
+        profile = CustomUser.objects.get(id__exact=user.id)
         # check if profile of the user is in many to many field(like field in Post)
 
         if profile in post_obj.liked.all():
@@ -104,7 +104,7 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
     def get_object(self, *args, **kwargs):
         pk = self.kwargs.get('pk')
         obj = Post.objects.get(pk=pk)
-        if not obj.author.user == self.request.user:
+        if not obj.author.id == self.request.user.id:
             messages.warning(self.request, 'You need to be the author of the post in order to delete it')
         return obj
 
@@ -116,7 +116,7 @@ class PostUpdateView(LoginRequiredMixin, UpdateView):
     success_url = reverse_lazy('posts:main-post-view')
 
     def form_valid(self, form):
-        profile = Profile.objects.get(user=self.request.user)
+        profile = CustomUser.objects.get(id__exact=self.request.user.id)
         if form.instance.author == profile:
             return super().form_valid(form)
         else:
