@@ -31,7 +31,7 @@
                                 </button>
                             </form>
                         {% endif %}
-                        {% if obj.user_name in rel_receiver and request.user.username not in  obj.friends.all %}
+                        {% if obj.user_name in rel_receiver and request.user not in  obj.friends.all %}
                             <button class="ui disabled button mb-5 w-big"><i class="user icon"></i>Waiting for approval
                             </button>
                         {% endif %}

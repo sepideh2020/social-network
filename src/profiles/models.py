@@ -6,7 +6,7 @@ from django.shortcuts import reverse
 from django.template.defaultfilters import slugify
 from django.utils.translation import ugettext_lazy as _
 from social_network import settings
-from .utils import get_random_code
+
 
 
 class CustomUserManager(BaseUserManager):
@@ -133,14 +133,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         and for ones who do not have first name and last name ,if a user does not have first and last name,
         his slug is made based on user. for making unique slug we used  get_random_code() function which is
         defined at utils.py"""
-        ex = False
-        to_slug = self.slug
-        to_slug = slugify(str(self.user_name))
-        ex = CustomUser.objects.filter(slug=to_slug).exists()
-        while ex:
-            to_slug = slugify(to_slug + " " + str(get_random_code()))
-            ex = CustomUser.objects.filter(slug=to_slug).exists()
-        self.slug = to_slug
+        self.slug = slugify(str(self.user_name))
         super().save(*args, **kwargs)
 STATUS_CHOICES = (
     ('send', 'send'),

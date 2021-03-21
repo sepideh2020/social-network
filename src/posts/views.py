@@ -21,6 +21,8 @@ def post_comment_create_and_list_view(request):
     # we used request.Files because we might send an image
     c_form = CommentModelForm()
     post_added = False
+    persons = "No result"
+    q = None
     # handling----if post_added is True show a message
     profile = CustomUser.objects.get(id__exact=request.user.id)
 
@@ -45,15 +47,20 @@ def post_comment_create_and_list_view(request):
             # gets the id of the post which the user us commenting on
             instance.save()
             c_form = CommentModelForm()  # resets the form
-
+    if 'search_button' in request.POST:
+        q = request.POST['q']
+        persons = CustomUser.objects.filter(user_name__icontains=q)
+        print(persons)
     context = {
         'qs': qs,
         'profile': profile,
         'p_form': p_form,
         'c_form': c_form,
         'post_added': post_added,
-
+        'persons': persons,
+        'q': q,
     }
+    print(context)
     return render(request, 'posts/main.html', context)
 
 
@@ -139,5 +146,3 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
         pk = self.kwargs.get('pk')
         obj = Comment.objects.get(pk=pk)
         return obj
-
-
