@@ -2,10 +2,9 @@ import json
 
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Profile, Relationship
+from .models import CustomUser, Relationship
 from .forms import ProfileModelForm
 from django.views.generic import ListView, DetailView
-from django.contrib.auth.models import User
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,7 +12,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 @login_required
 def my_profile_view(request):
-    profile = Profile.objects.get(user=request.user)
+    profile = CustomUser.objects.get(id__exact=request.user.id)
     form = ProfileModelForm(request.POST or None, request.FILES or None, instance=profile)
     posts = profile.get_all_authors_posts()
     len_posts = True if len(profile.get_all_authors_posts()) > 0 else False
@@ -39,7 +38,7 @@ def my_profile_view(request):
 @login_required
 def invited_received_view(request):
     """gets all the invitations for a particular profile"""
-    profile = Profile.objects.get(user=request.user)
+    profile = CustomUser.objects.get(id__exact=request.user.id)
     qs = Relationship.objects.invitation_received(profile)
     results = list(map(lambda x: x.sender, qs))
     if len(results) == 0:
@@ -63,20 +62,20 @@ def invited_received_view(request):
 
 class invite_profiles_list_view(LoginRequiredMixin, ListView):
     """profiles list available to invite"""
-    model = Profile
+    model = CustomUser
     template_name = 'profiles/to_invite_list.html'
     context_object_name = 'qs'
 
     def get_queryset(self):
         user = self.request.user
-        qs = Profile.objects.get_all_profiles_to_invite(user)
+        qs = CustomUser.objects.get_all_profiles_to_invite(user)
         return qs
 
     def get_context_data(self, **kwargs):
         """this function allows us to some additional context to the template"""
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(username__iexact=self.request.user)  # it gets user the user
-        profile = Profile.objects.get(user=user)
+        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)  # it gets user the user
+        profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         # relationships where we invited other users
         rel_s = Relationship.objects.filter(receiver=profile)
@@ -84,9 +83,9 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user)
+            rel_receiver.append(item.receiver.user_name)
         for item in rel_s:
-            rel_sender.append(item.sender.user)
+            rel_sender.append(item.sender.user_name)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['is_empty'] = False
@@ -100,8 +99,8 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
 def accept_invatation(request):
     if request.method == "POST":
         pk = request.POST.get('profile_pk')
-        sender = Profile.objects.get(pk=pk)
-        receiver = Profile.objects.get(user=request.user)
+        sender = CustomUser.objects.get(pk=pk)
+        receiver = CustomUser.objects.get(id__exact=request.user.id)
         rel = get_object_or_404(Relationship, sender=sender, receiver=receiver)
         if rel.status == 'send':
             rel.status = 'accepted'
@@ -113,8 +112,8 @@ def accept_invatation(request):
 def reject_invatation(request):
     if request.method == "POST":
         pk = request.POST.get('profile_pk')
-        receiver = Profile.objects.get(user=request.user)
-        sender = Profile.objects.get(pk=pk)
+        receiver = CustomUser.objects.get(id__exact=request.user.id)
+        sender = CustomUser.objects.get(pk=pk)
         rel = get_object_or_404(Relationship, sender=sender, receiver=receiver)
         rel.delete()
     return redirect('profiles:my-invites-view')
@@ -124,32 +123,32 @@ def reject_invatation(request):
 def profiles_list_view(request):
     """get all profiles by method view"""
     user = request.user
-    qs = Profile.objects.get_all_profiles(user)
+    qs = CustomUser.objects.get_all_profiles(user)
     context = {'qs': qs}
     return render(request, 'profiles/profile_list.html', context)
 
 
 class ProfileDetailView(LoginRequiredMixin, DetailView):
-    model = Profile
+    model = CustomUser
     template_name = 'profiles/detail.html'
 
     def get_object(self, slug=None):
         slug = self.kwargs.get('slug')
-        profile = Profile.objects.get(slug=slug)
+        profile = CustomUser.objects.get(slug=slug)
         return profile
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(username__iexact=self.request.user)
-        profile = Profile.objects.get(user=user)
+        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)
+        profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         rel_s = Relationship.objects.filter(receiver=profile)
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user)
+            rel_receiver.append(item.receiver.user_name)
         for item in rel_s:
-            rel_sender.append(item.sender.user)
+            rel_sender.append(item.sender.user_name)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['posts'] = self.get_object().get_all_authors_posts()
@@ -159,20 +158,20 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
 
 class ProfileListView(LoginRequiredMixin, ListView):
     """get all profiles by list view"""
-    model = Profile
+    model = CustomUser
     template_name = 'profiles/profile_list.html'
     context_object_name = 'qs'
 
     def get_queryset(self):  # get all profile without own
-        qs = Profile.objects.get_all_profiles(self.request.user)
+        qs = CustomUser.objects.get_all_profiles(self.request.user)
         return qs
 
     def get_context_data(self, **kwargs):
         """this function allows us to some additional context to the template"""
 
         context = super().get_context_data(**kwargs)
-        user = User.objects.get(username__iexact=self.request.user)  # it gets user the user
-        profile = Profile.objects.get(user=user)
+        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)  # it gets user the user
+        profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         # relationships where we invited other users
         rel_s = Relationship.objects.filter(receiver=profile)
@@ -180,9 +179,9 @@ class ProfileListView(LoginRequiredMixin, ListView):
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user)
+            rel_receiver.append(item.receiver.user_name)
         for item in rel_s:
-            rel_sender.append(item.sender.user)
+            rel_sender.append(item.sender.user_name)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['is_empty'] = False
@@ -200,8 +199,8 @@ def send_invitation(request):
     if request.method == 'POST':
         pk = request.POST.get('profile_pk')
         user = request.user
-        sender = Profile.objects.get(user=user)
-        receiver = Profile.objects.get(pk=pk)  # primary key
+        sender = CustomUser.objects.get(id__exact=user.id)
+        receiver = CustomUser.objects.get(pk=pk)  # primary key
 
         #  creating relationship
         rel = Relationship.objects.create(sender=sender, receiver=receiver, status='send')
@@ -218,8 +217,8 @@ def remove_from_friends(request):
     if request.method == 'POST':
         pk = request.POST.get('profile_pk')
         user = request.user
-        sender = Profile.objects.get(user=user)  # sender is us
-        receiver = Profile.objects.get(pk=pk)  # profile we want to remove from friends
+        sender = CustomUser.objects.get(id__exact=user.id)  # sender is us
+        receiver = CustomUser.objects.get(pk=pk)  # profile we want to remove from friends
 
         # there is two senario here whether first we requested and we want to remove that guz from
         # out friends list or first that guz requested us and now we want to remove him from our friends list
@@ -235,7 +234,7 @@ def remove_from_friends(request):
 
 def autocomplete(request):
     if 'term' in request.GET:
-        qs = Profile.objects.filter(slug__icontains=request.GET.get('term'))
+        qs = CustomUser.objects.filter(slug__icontains=request.GET.get('term'))
         titles = list()
         for person in qs:
             titles.append(person.slug)
