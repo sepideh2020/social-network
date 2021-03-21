@@ -38,24 +38,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites',
     # apps
     'posts.apps.PostsConfig',
     'profiles.apps.ProfilesConfig',
-    # django all auth
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-]
-SITE_ID = 1
 
-# LOGIN_URL = '/admin/'
-LOGIN_REDIRECT_URL = '/posts'
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_UNIQUE = True
-if DEBUG:
-    EMAIL_BACKEND = 'django.code.mail.backends.dummy.EmailBackend'
+
+]
+
+
+AUTH_USER_MODEL = 'profiles.User'
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -85,19 +77,6 @@ TEMPLATES = [
         },
     },
 ]
-
-AUTHENTICATION_BACKENDS = [
-    ###############
-    # 'userauth.backends.PhoneNumberBackend',
-    # Needed to login by username in Django admin, regardless of `allauth`
-    'django.contrib.auth.backends.ModelBackend',
-
-    # `allauth` specific authentication methods, such as login by e-mail
-    'allauth.account.auth_backends.AuthenticationBackend',
-    'profiles.authentication.EmailAuthentication',
-
-]
-USERNAME_FIELD = 'identifier'  ##
 
 WSGI_APPLICATION = 'social_network.wsgi.application'
 
@@ -132,8 +111,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
-
-# AUTH_USER_MODEL = 'profiles.AbsUser'  ###
 
 LANGUAGE_CODE = 'en-us'
 

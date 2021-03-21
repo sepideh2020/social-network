@@ -1,6 +1,4 @@
 from django.contrib import messages
-from django.core.paginator import Paginator
-from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from .models import Post, Like, Comment

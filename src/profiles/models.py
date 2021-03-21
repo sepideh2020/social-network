@@ -1,25 +1,31 @@
-from django.contrib.auth.base_user import AbstractBaseUser
-from django.core.validators import RegexValidator
+from django.core.mail import send_mail
 from django.db import models
-from django.contrib.auth.models import User, AbstractUser
+from django.contrib.auth.models import AbstractUser, PermissionsMixin
+from django.db.models import Q
 from django.shortcuts import reverse
-
+from social_network import settings
+# from .managers import UserManager
 from .utils import get_random_code
 from django.template.defaultfilters import slugify
-from django.db.models import Q
-
-
-class AbsUser(User):
-    phone_regex = RegexValidator(regex=r'^\+?1?\d{9,15}$',
-                                 message="Phone number must be entered in the format: '+999999999'. Up to 15 digits allowed.")
-    phone_number = models.CharField(validators=[phone_regex], max_length=17, blank=True)  # validators should be a list
+from django.contrib.auth.base_user import AbstractBaseUser
+from .validators import mobile_validator, mobile_len_validator, UnicodeUsernameValidator
 
 
 
+class User(AbstractUser):
+    """
+    An abstract base class implementing a fully featured User model with
+    admin-compliant permissions.
+
+    Username and password are required. Other fields are optional.
+    """
+
+    phone_number = models.CharField(max_length=13, validators=[mobile_validator, mobile_len_validator], unique=True)
 
 
+    REQUIRED_FIELDS = ['phone_number','email']
 
-    ###########################################
+
 
 
 class ProfileManager(models.Manager):
@@ -31,6 +37,7 @@ class ProfileManager(models.Manager):
 
         profiles = Profile.objects.all().exclude(user=sender)
         profile = Profile.objects.get(user=sender)
+
         qs = Relationship.objects.filter(Q(sender=profile) | Q(receiver=profile))
         # grabbed all the relationships where we are the sender or receiver
 
@@ -52,10 +59,11 @@ class ProfileManager(models.Manager):
         return profiles
 
 
+
 class Profile(models.Model):
     first_name = models.CharField(max_length=200, blank=True)
     last_name = models.CharField(max_length=200, blank=True)
-    user = models.OneToOneField(AbsUser, on_delete=models.CASCADE)
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     # every user will have his own profile/every time the user is deleted the profile is deleted as well
     bio = models.TextField(default='no bio ...', max_length=300)
     GENDER_CHOICE = (
@@ -71,7 +79,7 @@ class Profile(models.Model):
     # install pillow
     # create media_root
     # find avatar.png
-    friends = models.ManyToManyField(AbsUser, blank=True, related_name='friends')
+    friends = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='friends')
     slug = models.SlugField(unique=True, blank=True)
     # slug is base on first name and last name if they are provided otherwise slug is made out of the user
     updated = models.DateTimeField(auto_now=True)
