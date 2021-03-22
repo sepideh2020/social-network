@@ -1,13 +1,55 @@
-import json
-
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import CustomUser, Relationship
-from .forms import ProfileModelForm
-from django.views.generic import ListView, DetailView
+from .forms import ProfileModelForm, SignUpForm
+from django.views.generic import ListView, DetailView, CreateView
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+
+from django.contrib.auth import login, authenticate
+from django.shortcuts import render, redirect
+from django.contrib.auth import login, authenticate
+from django.shortcuts import render, redirect
+
+
+#
+# def signup(request):
+#     if request.method == 'POST':
+#         form = SignUpForm(request.POST)
+#         if form.is_valid():
+#             form.save()
+#             username = form.cleaned_data.get('user_name')
+#             raw_password = form.cleaned_data.get('password1')
+#             user = authenticate(username=username, password=raw_password)
+#             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+#             return redirect('posts:main-post-view')
+#     else:
+#         form = SignUpForm()
+#     return render(request, 'main/signup.html', {'form': form})
+
+class RegisterUser(CreateView):
+    form_class = SignUpForm
+    success_url = '/posts:main-post-view/'
+    template_name = 'main/signup.html'
+
+    def get(self, request, **kwargs):
+        form = SignUpForm()
+        return render(request, 'main/signup.html', {'form': form})
+
+    def post(self, request, **kwargs):
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data['user_name']
+            email = form.cleaned_data['email']
+            phone = form.cleaned_data['phone']
+            raw_password = form.cleaned_data.get('password1')
+
+            user = authenticate(username=username,email=email,phone=phone, password=raw_password)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            return redirect('posts:main-post-view')
+        return render(request, 'main/signup.html', {'form': form})
 
 
 @login_required

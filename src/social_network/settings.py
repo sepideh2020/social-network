@@ -38,9 +38,15 @@ INSTALLED_APPS = [
     # apps
     'posts.apps.PostsConfig',
     'profiles.apps.ProfilesConfig',
+    # login
+
+
 ]
 
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
 
+]
 AUTH_USER_MODEL = 'profiles.CustomUser'
 
 MIDDLEWARE = [

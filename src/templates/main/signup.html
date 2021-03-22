@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% load i18n %}
+
+{% block head_title %}{% trans "Signup" %}{% endblock %}
+
+{% block content %}
+    <h1>{% trans "Sign Up" %}</h1>
+
+    <p>{% blocktrans %}Already have an account? Then please <a href="">sign in</a>.{% endblocktrans %}
+    </p>
+    <div class="ui grid">
+        <div class="six wide column">
+            <form method="post">
+                {% csrf_token %}
+                {% if form.errors %}
+                    <div class="ui error message">
+                        <i class="close icon"></i>
+                        <div class="header">
+                            There were some errors with your submission
+                        </div>
+
+                        <ul>
+
+                            {{ form.error_class }}
+                            {{ form.non_field_errors }}
+
+                        </ul>
+
+                    </div>
+                {% endif %}
+
+                <div class="ui small form">
+
+
+                    <div class="field">
+                        <label>User Name</label>
+
+                        {{ form.user_name }}
+
+
+                    </div>
+                    <br>
+
+                    <div class="field">
+                        <label>Email</label>
+
+                        {{ form.email }}
+
+
+                    </div>
+
+                    <br>
+                    <div class="field">
+                        <label>Phone</label>
+
+                        {{ form.phone }}
+
+
+                    </div>
+                    <div class="field">
+                        <label>Password</label>
+                        {{ form.password1 }}
+
+
+                    </div>
+                    <div class="field ">
+                        <label>Repeat Password</label>
+                        {{ form.password2 }}
+
+                    </div>
+
+
+                    <br>
+
+                    <button type="submit" class="ui primary button">{% trans "Sign Up" %} &raquo;</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+
+{% endblock %}
+
+{#    <div class="ui grid">#}
+{#        <div class="six wide column">#}
+{##}
+{#            <form class="signup ui form" id="signup_form" method="post" action="{% url 'signup' %}">#}
+{#                {% csrf_token %}#}
+{#                {{ form.as_p }}#}
+{##}
+{#                <button type="submit" class="ui primary button">{% trans "Sign Up" %} &raquo;</button>#}
+{#            </form>#}
+{#        </div>#}
+{#    </div>#}
+{##}
+{#{% endblock %}#}

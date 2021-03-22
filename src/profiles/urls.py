@@ -14,6 +14,7 @@ from .views import (my_profile_view,
 app_name = 'profiles'
 
 urlpatterns = [
+
     path('', ProfileListView.as_view(), name='all-profiles-view'),
     path('search/', autocomplete, name='search-view'),
     path('myprofile/', my_profile_view, name='my-profile-view'),

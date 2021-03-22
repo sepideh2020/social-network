@@ -27,10 +27,10 @@ class UnicodeUsernameValidator(validators.RegexValidator):
 
 
 
-
-def mobile_validator(mobile):
-    if mobile[0:4] != '+989':
+def mobile_validator(phone):
+    if phone[0:4] != '+989':
         raise ValidationError('Invalid mobile')
+
 
 
 def mobile_len_validator(mobile):

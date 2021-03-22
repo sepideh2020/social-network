@@ -35,7 +35,7 @@
                             <button class="ui disabled button mb-5 w-big"><i class="user icon"></i>Waiting for approval
                             </button>
                         {% endif %}
-                        {% if request.user.user_name in obj.friends.all %}
+                        {% if request.user in obj.friends.all %}
                             <form action="{% url 'profiles:remove-friend' %}" method="POST">
                                 {#  removing from friends  #}
                                 {% csrf_token %}

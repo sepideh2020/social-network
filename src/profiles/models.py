@@ -1,13 +1,93 @@
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin, AbstractUser
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.shortcuts import reverse
 from django.template.defaultfilters import slugify
+from django.utils import timezone
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from social_network import settings
 from .utils import get_random_code
+from .validators import mobile_validator, mobile_len_validator
 
+
+#
+# class CustomUserManager(BaseUserManager):
+#     """Define a model manager for User model with no username field."""
+#     use_in_migrations = True
+#
+#     def create_user(self, email, phone, password, **kwargs):
+#         """
+#         Creates and saves a Account with the given email or phone and password.
+#         """
+#         # now = timezone.now()
+#         identifier = ''
+#         if not email:
+#             if not phone:
+#                 raise ValueError('Users must have a valid email or phone address.')
+#             else:
+#                 identifier = phone
+#
+#         if not phone:
+#             if not email:
+#                 raise ValueError('Users must have a valid email or phone address.')
+#             else:
+#                 email = self.normalize_email(email)
+#                 identifier = email
+#
+#
+#         user = self.model(email=email, phone=phone,
+#                           identifier=identifier,
+#                           joined=now,
+#                           **kwargs
+#                           )
+#
+#         user.set_password(password)
+#         user.save(using=self._db)
+#         return user
+#
+#     def create_superuser(self, email, password, **kwargs):
+#         user = self.model(
+#             email=email,
+#             is_staff=True,
+#             is_superuser=True,
+#             **kwargs
+#         )
+#         user.set_password(password)
+#         user.save(using=self._db)
+#         return user
+#
+#     def get_all_profiles_to_invite(self, sender):
+#         """gets all the profiles that are available for us to invite so cases of profiles where we are already
+#         in a relationship with were excluded.
+#         Here the sender is ourselves and the receiver is different user with whom we dont have a relationship status
+#         set to 'accepted' """
+#
+#         profiles = CustomUser.objects.all().exclude(id__exact=sender.id)
+#         profile = CustomUser.objects.get(id__exact=sender.id)
+#         qs = Relationship.objects.filter(Q(sender=profile) | Q(receiver=profile))
+#         # grabbed all the relationships where we are the sender or receiver
+#
+#         accepted = set([])
+#         for rel in qs:
+#             if rel.status == 'accepted':
+#                 # because are either receiver or sender using set prevents repetition in list
+#                 accepted.add(rel.receiver)
+#                 accepted.add(rel.sender)
+#
+#         available = [profile for profile in profiles if
+#                      profile not in accepted]  # all the available profile to invite
+#         print(available)
+#         return available
+#
+#     def get_all_profiles(self, me):
+#         """gets all the profiles that are in the system excluding our own"""
+#
+#         profiles = CustomUser.objects.all().exclude(id__exact=me.id)
+#         return profiles
+#
 
 class CustomUserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
@@ -65,32 +145,37 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    user_name = models.CharField(_('Username'), max_length=100, unique=True)
+    user_name = models.CharField('Username', max_length=100, unique=True, blank=False, null=False)
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
-    phone_number = models.CharField(_('Phone number'), max_length=11, blank=True, null=True, unique=True)
     GENDER_CHOICE = (
         ('M', 'Male'),
         ('F', 'Female'),
         ('O', 'Other')
     )
-    gender = models.CharField(max_length=6, choices=GENDER_CHOICE, null=True)
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICE, null=True, blank=True)
     bio = models.TextField(default='no bio ...', max_length=300)
     country = models.CharField(max_length=200, blank=True)
-    website = models.CharField(_('Website'), blank=True, max_length=150)
-    email = models.EmailField("email address", blank=True, null=True, unique=True)
+    website = models.CharField('Website', blank=True, max_length=150)
+    email = models.EmailField("email address", blank=True, null=True, unique=True)  # used as login as can't be null.
+    phone = models.CharField('Phone number', max_length=13, blank=True, null=True, unique=True,
+                             validators=[mobile_validator, mobile_len_validator])
     slug = models.SlugField(unique=True, blank=True)
     is_active = models.BooleanField(_('active'), default=True)
     is_superuser = models.BooleanField(_('superuser'), default=False)
     is_staff = models.BooleanField(_('staff'), default=False)
     friends = models.ManyToManyField('self', blank=True, related_name='friends')
+
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     USERNAME_FIELD = 'user_name'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email', 'phone']
     objects = CustomUserManager()
 
     def __str__(self):
         return '{}-{}'.format(self.user_name, self.created.strftime('%d-%m-%Y'))
+
+
+
 
     def get_absolute_url(self):
         return reverse("profiles:profile-detail-view", kwargs={"slug": self.slug})
@@ -142,12 +227,25 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
             ex = CustomUser.objects.filter(slug=to_slug).exists()
         self.slug = to_slug
         super().save(*args, **kwargs)
+
+
 STATUS_CHOICES = (
     ('send', 'send'),
     ('accepted', 'accepted')
 )
 
 
+#
+# class PhoneNumber(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('user'), on_delete=models.CASCADE)
+#     phone = models.CharField(unique=app_settings.UNIQUE_PHONE, max_length=254, verbose_name=_('phone number'))
+#     verified = models.BooleanField(verbose_name=_('verified'), default=False)
+#     primary = models.BooleanField(verbose_name=_('primary'), default=False)
+#
+# class PhoneConfirmation(models.Model):
+#     phone_number = models.ForeignKey(PhoneNumber, verbose_name=_('phone number'))
+#     created = models.DateTimeField(verbose_name=_('created'), default=timezone.now)
+#     sent = models.DateTimeField(verbose_name=_('sent'), null=True)
 class RelationshipManager(models.Manager):
 
     def invitation_received(self, receiver):
