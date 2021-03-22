@@ -65,7 +65,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    user_name = models.CharField(_('Username'), max_length=100, unique=True)
+    username = models.CharField(_('Username'), max_length=100, unique=True)
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
     phone_number = models.CharField(_('Phone number'), max_length=11, blank=True, null=True, unique=True)
     GENDER_CHOICE = (
@@ -85,12 +85,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     friends = models.ManyToManyField('self', blank=True, related_name='friends')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-    USERNAME_FIELD = 'user_name'
+    USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = []
     objects = CustomUserManager()
 
     def __str__(self):
-        return '{}-{}'.format(self.user_name, self.created.strftime('%d-%m-%Y'))
+        return '{}-{}'.format(self.username, self.created.strftime('%d-%m-%Y'))
 
     def get_absolute_url(self):
         return reverse("profiles:profile-detail-view", kwargs={"slug": self.slug})
@@ -126,14 +126,14 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__initial_user_name = self.user_name
+        self.__initial_username = self.username
 
     def save(self, *args, **kwargs):
         """this function is for making slug for users , Ones whose first and last name are similar
         and for ones who do not have first name and last name ,if a user does not have first and last name,
         his slug is made based on user. for making unique slug we used  get_random_code() function which is
         defined at utils.py"""
-        self.slug = slugify(str(self.user_name))
+        self.slug = slugify(str(self.username))
         super().save(*args, **kwargs)
 STATUS_CHOICES = (
     ('send', 'send'),

@@ -52,7 +52,7 @@ def post_comment_create_and_list_view(request):
             c_form = CommentModelForm()  # resets the form
     if 'search_button' in request.POST:
         q = request.POST['q']
-        persons = CustomUser.objects.filter(user_name__icontains=q)
+        persons = CustomUser.objects.filter(username__icontains=q)
 
     context = {
         'qs': qs,

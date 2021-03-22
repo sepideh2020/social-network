@@ -74,7 +74,7 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         """this function allows us to some additional context to the template"""
         context = super().get_context_data(**kwargs)
-        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)  # it gets user the user
+        user = CustomUser.objects.get(username__iexact=self.request.user.username)  # it gets user the user
         profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         # relationships where we invited other users
@@ -83,9 +83,9 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user_name)
+            rel_receiver.append(item.receiver.username)
         for item in rel_s:
-            rel_sender.append(item.sender.user_name)
+            rel_sender.append(item.sender.username)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['is_empty'] = False
@@ -139,16 +139,16 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)
+        user = CustomUser.objects.get(username__iexact=self.request.user.username)
         profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         rel_s = Relationship.objects.filter(receiver=profile)
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user_name)
+            rel_receiver.append(item.receiver.username)
         for item in rel_s:
-            rel_sender.append(item.sender.user_name)
+            rel_sender.append(item.sender.username)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['posts'] = self.get_object().get_all_authors_posts()
@@ -170,7 +170,7 @@ class ProfileListView(LoginRequiredMixin, ListView):
         """this function allows us to some additional context to the template"""
 
         context = super().get_context_data(**kwargs)
-        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)  # it gets user the user
+        user = CustomUser.objects.get(username__iexact=self.request.user.username)  # it gets user the user
         profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         # relationships where we invited other users
@@ -179,9 +179,9 @@ class ProfileListView(LoginRequiredMixin, ListView):
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user_name)
+            rel_receiver.append(item.receiver.username)
         for item in rel_s:
-            rel_sender.append(item.sender.user_name)
+            rel_sender.append(item.sender.username)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['is_empty'] = False
@@ -234,10 +234,10 @@ def remove_from_friends(request):
 
 def autocomplete(request):
     if 'term' in request.GET:
-        qs = CustomUser.objects.filter(user_name__icontains=request.GET.get('term'))
+        qs = CustomUser.objects.filter(username__icontains=request.GET.get('term'))
         titles = list()
         for person in qs:
-            titles.append(person.user_name)
+            titles.append(person.username)
         return JsonResponse(titles, safe=False)
     return render(request, 'profiles/search.html')
 
