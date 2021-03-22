@@ -9,10 +9,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-# Create your views here.
+
 @login_required
 def post_comment_create_and_list_view(request):
-    qs = Post.objects.all()
+    # list_of_friends=request.user.get_friends()
     # before saving form we need to have author to be assigned to the field of author in the post model so
     # we need to get the profile be request.user
 
@@ -25,7 +25,7 @@ def post_comment_create_and_list_view(request):
     q = None
     # handling----if post_added is True show a message
     profile = CustomUser.objects.get(id__exact=request.user.id)
-
+    qs = Post.objects.filter(author__in=profile.get_friends())
     if 'submit_p_form' in request.POST:
         # used the name of the form to understand which form was submitted
         # by using if we understand which form was submitted
@@ -50,7 +50,7 @@ def post_comment_create_and_list_view(request):
     if 'search_button' in request.POST:
         q = request.POST['q']
         persons = CustomUser.objects.filter(user_name__icontains=q)
-        print(persons)
+
     context = {
         'qs': qs,
         'profile': profile,
@@ -60,7 +60,7 @@ def post_comment_create_and_list_view(request):
         'persons': persons,
         'q': q,
     }
-    print(context)
+
     return render(request, 'posts/main.html', context)
 
 

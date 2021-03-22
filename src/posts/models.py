@@ -2,7 +2,6 @@ from django.db import models
 from django.core.validators import FileExtensionValidator
 from profiles.models import CustomUser
 
-
 # Create your models here.
 from social_network import settings
 
@@ -19,7 +18,7 @@ class Post(models.Model):
     author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='posts')
 
     def __str__(self):
-        return str(self.content[:20])
+        return str(self.content[:20] + '...')
 
     def num_likes(self):
         """return number of likes for a post"""
@@ -64,4 +63,3 @@ class Like(models.Model):
 
     def __str__(self):
         return '{}-{}-{}'.format(self.user, self.post, self.value)
-
