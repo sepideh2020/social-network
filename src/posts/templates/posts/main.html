@@ -4,7 +4,41 @@
 
 {% block content %}
     <div class="ui grid">
-        <div class="eleven wide column">
+        <div class="three wide column ">
+            <form action="" method="POST">
+                {% csrf_token %}
+                <div class="ui action left icon input">
+                    <input class="prompt" type="text" name='q' placeholder="name of a friend" style="width: 160px">
+                    <button type='submit' class="ui button" style="width: 50px" name="search_button"><i
+                            class="search icon"></i></button>
+                </div>
+            </form>
+            <div class="ui segment">
+                {% if q %}
+                    {% if persons %}
+                        <h4>You Searched for '{{ q }}'</h4>
+                        {% for friend in persons %}
+                            <a href="{% url 'profiles:profile-detail-view' friend.slug %}"><img
+                                    class="ui avatar image" src={{ friend.avatar.url }}>
+                                {{ friend.username }}</a><br>
+                        {% endfor %}
+                    {% else %}
+                        <h4>noresult</h4>
+                    {% endif %}
+                {% else %}
+                    {% if request.user.get_friends_no != 0 %}
+                        {% for friend in request.user.get_friends %}
+                            <a href="{% url 'profiles:profile-detail-view' friend.slug %}"><img
+                                    class="ui avatar image" src={{ friend.avatar.url }}>
+                                {{ friend.username }}</a><br>
+                        {% endfor %}
+                    {% else %}
+                        <h3>No Friends</h3>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="nine wide column">
             {% for obj in qs %}
 
                 <div class="ui fluid card">
@@ -98,7 +132,7 @@
 
             {% endfor %}
         </div>
-        <div class="five wide column">
+        <div class="four wide column">
             <div class="ui segment">
                 {% if post_added %}
                     <div class="ui green message">Post added</div>
@@ -110,6 +144,7 @@
                 </form>
             </div>
         </div>
+
     </div>
 {% endblock content %}
 

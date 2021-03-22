@@ -293,9 +293,11 @@ def remove_from_friends(request):
 
 def autocomplete(request):
     if 'term' in request.GET:
-        qs = CustomUser.objects.filter(slug__icontains=request.GET.get('term'))
+        qs = CustomUser.objects.filter(username__icontains=request.GET.get('term'))
         titles = list()
         for person in qs:
-            titles.append(person.slug)
+            titles.append(person.username)
         return JsonResponse(titles, safe=False)
     return render(request, 'profiles/search.html')
+
+

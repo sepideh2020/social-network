@@ -9,10 +9,10 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-# Create your views here.
+
 @login_required
 def post_comment_create_and_list_view(request):
-    qs = Post.objects.all()
+    # list_of_friends=request.user.get_friends()
     # before saving form we need to have author to be assigned to the field of author in the post model so
     # we need to get the profile be request.user
 
@@ -21,9 +21,11 @@ def post_comment_create_and_list_view(request):
     # we used request.Files because we might send an image
     c_form = CommentModelForm()
     post_added = False
+    persons = "No result"
+    q = None
     # handling----if post_added is True show a message
     profile = CustomUser.objects.get(id__exact=request.user.id)
-
+    qs = Post.objects.filter(author__in=profile.get_friends())
     if 'submit_p_form' in request.POST:
         # used the name of the form to understand which form was submitted
         # by using if we understand which form was submitted
@@ -45,6 +47,9 @@ def post_comment_create_and_list_view(request):
             # gets the id of the post which the user us commenting on
             instance.save()
             c_form = CommentModelForm()  # resets the form
+    if 'search_button' in request.POST:
+        q = request.POST['q']
+        persons = CustomUser.objects.filter(username__icontains=q)
 
     context = {
         'qs': qs,
@@ -52,8 +57,10 @@ def post_comment_create_and_list_view(request):
         'p_form': p_form,
         'c_form': c_form,
         'post_added': post_added,
-
+        'persons': persons,
+        'q': q,
     }
+
     return render(request, 'posts/main.html', context)
 
 
@@ -139,5 +146,3 @@ class CommentDeleteView(LoginRequiredMixin, DeleteView):
         pk = self.kwargs.get('pk')
         obj = Comment.objects.get(pk=pk)
         return obj
-
-
