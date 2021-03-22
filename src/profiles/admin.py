@@ -6,7 +6,7 @@ from .models import CustomUser, Relationship
 
 @admin.register(CustomUser)
 class PostAdmin(admin.ModelAdmin):
-    list_display = ['username', 'email', 'phone_number', 'first_name', 'last_name']
+    list_display = ['username', 'email', 'phone', 'first_name', 'last_name']
 
 
 @admin.register(Relationship)

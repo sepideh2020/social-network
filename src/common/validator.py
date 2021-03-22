@@ -21,7 +21,7 @@ def confirm_website(website):
         raise ValidationError(('your website is invalid'))
 
 
-def confirm_phone_number(phone):
+def confirm_phone(phone):
     """
     check value of phone field in costomuser model with pattern for sure it`s correct or not
     """

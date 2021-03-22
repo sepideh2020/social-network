@@ -67,7 +67,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=100)
     username = models.CharField(_('Username'), max_length=100, unique=True)
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
-    phone_number = models.CharField(_('Phone number'), max_length=11, blank=True, null=True, unique=True)
+    phone = models.CharField(_('Phone number'), max_length=13, blank=True, null=True, unique=True)
     GENDER_CHOICE = (
         ('M', 'Male'),
         ('F', 'Female'),
@@ -86,7 +86,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email','phone']
     objects = CustomUserManager()
 
     def __str__(self):
@@ -135,6 +135,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         defined at utils.py"""
         self.slug = slugify(str(self.username))
         super().save(*args, **kwargs)
+
 STATUS_CHOICES = (
     ('send', 'send'),
     ('accepted', 'accepted')
