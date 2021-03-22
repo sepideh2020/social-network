@@ -86,7 +86,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = []
+    REQUIRED_FIELDS = ['email', 'phone']
     objects = CustomUserManager()
 
     def __str__(self):
