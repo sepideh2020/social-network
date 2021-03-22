@@ -87,27 +87,27 @@ from .validators import mobile_validator, mobile_len_validator
 #
 #         profiles = CustomUser.objects.all().exclude(id__exact=me.id)
 #         return profiles
-#
+
 
 class CustomUserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
     use_in_migrations = True
 
-    def _create_user(self, user_name, password, **extra_fields):
-        user = self.model(user_name=user_name, **extra_fields)
+    def _create_user(self, username, password, **extra_fields):
+        user = self.model(username=username, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_user(self, user_name, password=None, **extra_fields):
+    def create_user(self, username, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', False)
         extra_fields.setdefault('is_staff', False)
-        return self._create_user(user_name, password, **extra_fields)
+        return self._create_user(username, password, **extra_fields)
 
-    def create_superuser(self, user_name, password, **extra_fields):
+    def create_superuser(self, username, password, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
-        return self._create_user(user_name, password, **extra_fields)
+        return self._create_user(username, password, **extra_fields)
 
     def get_all_profiles_to_invite(self, sender):
         """gets all the profiles that are available for us to invite so cases of profiles where we are already
@@ -145,7 +145,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    user_name = models.CharField('Username', max_length=100, unique=True, blank=False, null=False)
+    username = models.CharField('Username', max_length=100, unique=True, blank=False, null=False)
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
     GENDER_CHOICE = (
         ('M', 'Male'),
@@ -167,12 +167,12 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
-    USERNAME_FIELD = 'user_name'
+    USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'phone']
     objects = CustomUserManager()
 
     def __str__(self):
-        return '{}-{}'.format(self.user_name, self.created.strftime('%d-%m-%Y'))
+        return '{}-{}'.format(self.username, self.created.strftime('%d-%m-%Y'))
 
 
 
@@ -211,7 +211,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.__initial_user_name = self.user_name
+        self.__initial_username = self.username
 
     def save(self, *args, **kwargs):
         """this function is for making slug for users , Ones whose first and last name are similar
@@ -220,7 +220,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         defined at utils.py"""
         ex = False
         to_slug = self.slug
-        to_slug = slugify(str(self.user_name))
+        to_slug = slugify(str(self.username))
         ex = CustomUser.objects.filter(slug=to_slug).exists()
         while ex:
             to_slug = slugify(to_slug + " " + str(get_random_code()))

@@ -25,7 +25,7 @@
 
                         </div>
                         <img class="ui avatar image" src={{ obj.author.avatar.url }}>
-                        {{ obj.author.user_name }} - {{ obj.created|timesince }} ago
+                        {{ obj.author.username }} - {{ obj.created|timesince }} ago
                     </div>
                     <div class="ui fluid image">
                         {% if obj.image %}
@@ -71,7 +71,7 @@
 
                                     <div class="ui segment mb-5">
                                         <img class="ui avatar image" src={{ c.user.avatar.url }}>
-                                        <span>{{ c.user.user_name }}</span>
+                                        <span>{{ c.user.username }}</span>
                                         <div class='mt-5'>{{ c.body }}</div>
                                         {% if request.user.id == obj.author.id or c.user.id == request.user.id %}
                                             <a href="{% url 'posts:comment-delete' c.pk %}">

@@ -10,7 +10,7 @@ profile detail
     <div class="row">
         <div class="four wide column">
             <img class="ui medium rounded image" src={{object.avatar.url}}>
-            <h1>{{object.user_name}}</h1>
+            <h1>{{object.username}}</h1>
             <div class="ui vertical fluid menu">
                 <div class="item">
                     Posts
@@ -30,7 +30,7 @@ profile detail
                 </div>
             </div>
 
-            {% if object.user_name not in rel_receiver and object.user_name not in rel_sender and object.user_name != request.user.user_name %}
+            {% if object.username not in rel_receiver and object.username not in rel_sender and object.username != request.user.username %}
                 <form action="{% url 'profiles:send-invite' %}" method="POST">
                     {% csrf_token %}
                     <input type="hidden" name="profile_pk" value={{object.pk}}>
@@ -38,11 +38,11 @@ profile detail
                 </form>
             {% endif %}
 
-            {% if object.user_name in rel_receiver and request.user.user_name not in object.friends.all %}
+            {% if object.username in rel_receiver and request.user.username not in object.friends.all %}
                 <button class="ui disabled button mb-5 w-big"><i class="user icon"></i>Waiting for approval</button>
             {% endif %}
 
-            {% if request.user.user_name in object.friends.all %}
+            {% if request.user.username in object.friends.all %}
                 <form action="{% url 'profiles:remove-friend' %}" method="POST">
                     {% csrf_token %}
                     <input type="hidden" name="profile_pk" value={{object.pk}}>

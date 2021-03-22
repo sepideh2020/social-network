@@ -1,32 +1,18 @@
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import CustomUser, Relationship
-from .forms import ProfileModelForm, SignUpForm
+from .forms import ProfileModelForm, SignUpForm, LoginForm
 from django.views.generic import ListView, DetailView, CreateView
-from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-
-from django.contrib.auth import login, authenticate
+from django.views import View
 from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate
-from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.contrib.auth import views as auth_views
 
-
-#
-# def signup(request):
-#     if request.method == 'POST':
-#         form = SignUpForm(request.POST)
-#         if form.is_valid():
-#             form.save()
-#             username = form.cleaned_data.get('user_name')
-#             raw_password = form.cleaned_data.get('password1')
-#             user = authenticate(username=username, password=raw_password)
-#             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-#             return redirect('posts:main-post-view')
-#     else:
-#         form = SignUpForm()
-#     return render(request, 'main/signup.html', {'form': form})
 
 class RegisterUser(CreateView):
     form_class = SignUpForm
@@ -41,15 +27,46 @@ class RegisterUser(CreateView):
         form = SignUpForm(request.POST)
         if form.is_valid():
             form.save()
-            username = form.cleaned_data['user_name']
-            email = form.cleaned_data['email']
-            phone = form.cleaned_data['phone']
+            username = form.cleaned_data.get('username')
+            email = form.cleaned_data.get('email')
+            phone = form.cleaned_data.get('phone')
             raw_password = form.cleaned_data.get('password1')
 
-            user = authenticate(username=username,email=email,phone=phone, password=raw_password)
+            user = authenticate(username=username, email=email, phone=phone, password=raw_password)
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
             return redirect('posts:main-post-view')
         return render(request, 'main/signup.html', {'form': form})
+
+
+#
+# class MobilePhoneOrEmailModelBackend(ModelBackend):
+#
+#     def authenticate(self, username=None, password=None, **kwargs):
+#         if '@' in username:
+#             kwargs = {'email': username}
+#         if '+989' in username:
+#             kwargs = {'phone': username}
+#
+#         else:
+#             kwargs = {'username': username}
+#         try:
+#             user = CustomUser.objects.get(**kwargs)
+#             if user.check_password(password):
+#                 return user
+#         except CustomUser.DoesNotExist:
+#             return None
+#
+#     def get_user(self, username):
+#         try:
+#             return CustomUser.objects.get(pk=username)
+#         except CustomUser.DoesNotExist:
+#             return None
+
+
+class LoginView(auth_views.LoginView):
+    form_class = LoginForm
+
+    template_name = 'main/login.html'
 
 
 @login_required
@@ -116,7 +133,7 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
     def get_context_data(self, **kwargs):
         """this function allows us to some additional context to the template"""
         context = super().get_context_data(**kwargs)
-        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)  # it gets user the user
+        user = CustomUser.objects.get(username__iexact=self.request.user.username)  # it gets user the user
         profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         # relationships where we invited other users
@@ -125,9 +142,9 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user_name)
+            rel_receiver.append(item.receiver.username)
         for item in rel_s:
-            rel_sender.append(item.sender.user_name)
+            rel_sender.append(item.sender.username)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['is_empty'] = False
@@ -181,16 +198,16 @@ class ProfileDetailView(LoginRequiredMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)
+        user = CustomUser.objects.get(username__iexact=self.request.user.username)
         profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         rel_s = Relationship.objects.filter(receiver=profile)
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user_name)
+            rel_receiver.append(item.receiver.username)
         for item in rel_s:
-            rel_sender.append(item.sender.user_name)
+            rel_sender.append(item.sender.username)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['posts'] = self.get_object().get_all_authors_posts()
@@ -212,7 +229,7 @@ class ProfileListView(LoginRequiredMixin, ListView):
         """this function allows us to some additional context to the template"""
 
         context = super().get_context_data(**kwargs)
-        user = CustomUser.objects.get(user_name__iexact=self.request.user.user_name)  # it gets user the user
+        user = CustomUser.objects.get(username__iexact=self.request.user.username)  # it gets user the user
         profile = CustomUser.objects.get(id__exact=user.id)
         rel_r = Relationship.objects.filter(sender=profile)
         # relationships where we invited other users
@@ -221,9 +238,9 @@ class ProfileListView(LoginRequiredMixin, ListView):
         rel_receiver = []
         rel_sender = []
         for item in rel_r:
-            rel_receiver.append(item.receiver.user_name)
+            rel_receiver.append(item.receiver.username)
         for item in rel_s:
-            rel_sender.append(item.sender.user_name)
+            rel_sender.append(item.sender.username)
         context["rel_receiver"] = rel_receiver
         context["rel_sender"] = rel_sender
         context['is_empty'] = False
