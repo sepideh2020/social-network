@@ -5,6 +5,8 @@
 {% url 'profiles:invite-profiles-view' as path_to_invites %}
 {% url 'profiles:all-profiles-view' as path_to_all_profiles %}
 {% url 'profiles:search-view' as path_to_search_friend %}
+{% url 'logout' as logout %}
+{% url 'login' as login %}
 
 
 <div class="ui inverted menu nav mb-7">
@@ -52,11 +54,11 @@
                     {{ request.user }}
                 </a>
 
-                <a href="#" class="ui item">
+                <a href="{{ logout }}" class="ui item">
                     Logout
                 </a>
             {% else %}
-                <a href="#" class="ui item">
+                <a href="{{ login }}" class="ui item">
                     Login
                 </a>
             {% endif %}
