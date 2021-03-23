@@ -1,5 +1,11 @@
-from django.http import JsonResponse
+from django.contrib.sites.shortcuts import get_current_site
+from django.core.mail import EmailMessage
+from django.http import JsonResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
+from django.template.loader import render_to_string
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
 from .models import CustomUser, Relationship
 from .forms import ProfileModelForm, SignUpForm, LoginForm
 from django.views.generic import ListView, DetailView, CreateView
@@ -12,55 +18,71 @@ from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.contrib.auth import views as auth_views
+from .forms import SignUpForm
+from .tokens import account_activation_token
 
 
-class RegisterUser(CreateView):
-    form_class = SignUpForm
-    success_url = '/posts:main-post-view/'
-    template_name = 'main/signup.html'
-
-    def get(self, request, **kwargs):
-        form = SignUpForm()
-        return render(request, 'main/signup.html', {'form': form})
-
-    def post(self, request, **kwargs):
+# class RegisterUser(CreateView):
+    # form_class = SignUpForm
+    # success_url = '/posts:main-post-view/'
+    # template_name = 'main/signup.html'
+    #
+    # def get(self, request, **kwargs):
+    #     form = SignUpForm()
+    #     return render(request, 'main/signup.html', {'form': form})
+    #
+    # def post(self, request, **kwargs):
+    #     form = SignUpForm(request.POST)
+    #     if form.is_valid():
+    #         form.save()
+    #         username = form.cleaned_data.get('username')
+    #         email = form.cleaned_data.get('email')
+    #         phone = form.cleaned_data.get('phone')
+    #         raw_password = form.cleaned_data.get('password1')
+    #
+    #         user = authenticate(username=username, email=email, phone=phone, password=raw_password)
+    #         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+    #         return redirect('posts:main-post-view')
+    #     return render(request, 'main/signup.html', {'form': form})
+def RegisterUser(request):
+    if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
-            form.save()
-            username = form.cleaned_data.get('username')
-            email = form.cleaned_data.get('email')
-            phone = form.cleaned_data.get('phone')
-            raw_password = form.cleaned_data.get('password1')
+            user = form.save(commit=False)
+            user.is_active = False
+            user.save()
+            current_site = get_current_site(request)
+            mail_subject = 'Activate your blog account.'
+            message = render_to_string('main/acc_active_email.html', {
+                'user': user,
+                'domain': current_site.domain,
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'token': account_activation_token.make_token(user),
+            })
+            to_email = form.cleaned_data.get('email')
+            email = EmailMessage(
+                mail_subject, message, to=[to_email]
+            )
+            email.send()
+            return HttpResponse('Please confirm your email address to complete the registration')
+    else:
+        form = SignUpForm()
+    return render(request, 'main/signup.html', {'form': form})
 
-            user = authenticate(username=username, email=email, phone=phone, password=raw_password)
-            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-            return redirect('posts:main-post-view')
-        return render(request, 'main/signup.html', {'form': form})
-
-
-#
-# class MobilePhoneOrEmailModelBackend(ModelBackend):
-#
-#     def authenticate(self, username=None, password=None, **kwargs):
-#         if '@' in username:
-#             kwargs = {'email': username}
-#         if '+989' in username:
-#             kwargs = {'phone': username}
-#
-#         else:
-#             kwargs = {'username': username}
-#         try:
-#             user = CustomUser.objects.get(**kwargs)
-#             if user.check_password(password):
-#                 return user
-#         except CustomUser.DoesNotExist:
-#             return None
-#
-#     def get_user(self, username):
-#         try:
-#             return CustomUser.objects.get(pk=username)
-#         except CustomUser.DoesNotExist:
-#             return None
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        user = None
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        login(request, user)
+        # return redirect('home')
+        return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
+    else:
+        return HttpResponse('Activation link is invalid!')
 
 
 class LoginView(auth_views.LoginView):
@@ -109,15 +131,6 @@ def invited_received_view(request):
         'is_empty': is_empty,
     }
     return render(request, 'profiles/my_invites.html', context)
-
-
-# @login_required
-# def invite_profiles_list_view(request):
-#     """profiles list available to invite"""
-#     user = request.user
-#     qs = Profile.objects.get_all_profiles_to_invite(user)
-#     context = {'qs': qs}
-#     return render(request, 'profiles/to_invite_list.html', context)
 
 class invite_profiles_list_view(LoginRequiredMixin, ListView):
     """profiles list available to invite"""
