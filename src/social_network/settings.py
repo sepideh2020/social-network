@@ -38,10 +38,18 @@ INSTALLED_APPS = [
     # apps
     'posts.apps.PostsConfig',
     'profiles.apps.ProfilesConfig',
+
 ]
 
+AUTHENTICATION_BACKENDS = (
+    'profiles.backends.PhoneEmailBackend',  #
+    'django.contrib.auth.backends.ModelBackend',
 
-AUTH_USER_MODEL = 'profiles.CustomUser'
+)
+
+AUTH_USER_MODEL = 'profiles.CustomUser'  #
+LOGIN_REDIRECT_URL = '../posts/'  #
+LOGOUT_REDIRECT_URL = '/login/'  #
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

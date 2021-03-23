@@ -1,13 +1,72 @@
-import json
-
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import CustomUser, Relationship
-from .forms import ProfileModelForm
-from django.views.generic import ListView, DetailView
-from django.db.models import Q
+from .forms import ProfileModelForm, SignUpForm, LoginForm
+from django.views.generic import ListView, DetailView, CreateView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views import View
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.backends import ModelBackend
+from django.contrib.auth import get_user_model
+from django.db.models import Q
+from django.contrib.auth import views as auth_views
+
+
+class RegisterUser(CreateView):
+    form_class = SignUpForm
+    success_url = '/posts:main-post-view/'
+    template_name = 'main/signup.html'
+
+    def get(self, request, **kwargs):
+        form = SignUpForm()
+        return render(request, 'main/signup.html', {'form': form})
+
+    def post(self, request, **kwargs):
+        form = SignUpForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get('username')
+            email = form.cleaned_data.get('email')
+            phone = form.cleaned_data.get('phone')
+            raw_password = form.cleaned_data.get('password1')
+
+            user = authenticate(username=username, email=email, phone=phone, password=raw_password)
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            return redirect('posts:main-post-view')
+        return render(request, 'main/signup.html', {'form': form})
+
+
+#
+# class MobilePhoneOrEmailModelBackend(ModelBackend):
+#
+#     def authenticate(self, username=None, password=None, **kwargs):
+#         if '@' in username:
+#             kwargs = {'email': username}
+#         if '+989' in username:
+#             kwargs = {'phone': username}
+#
+#         else:
+#             kwargs = {'username': username}
+#         try:
+#             user = CustomUser.objects.get(**kwargs)
+#             if user.check_password(password):
+#                 return user
+#         except CustomUser.DoesNotExist:
+#             return None
+#
+#     def get_user(self, username):
+#         try:
+#             return CustomUser.objects.get(pk=username)
+#         except CustomUser.DoesNotExist:
+#             return None
+
+
+class LoginView(auth_views.LoginView):
+    form_class = LoginForm
+
+    template_name = 'main/login.html'
 
 
 @login_required

@@ -21,7 +21,7 @@ def confirm_website(website):
         raise ValidationError(('your website is invalid'))
 
 
-def confirm_phone_number(phone):
+def confirm_phone(phone):
     """
     check value of phone field in costomuser model with pattern for sure it`s correct or not
     """
@@ -30,10 +30,10 @@ def confirm_phone_number(phone):
         raise ValidationError(('your phone number is invalid'))
 
 
-def confirm_user_name(user_name):
+def confirm_username(username):
     """
-        check value of user_name field in customuser model with pattern for sure it`s correct or not
+        check value of username field in customuser model with pattern for sure it`s correct or not
     """
     pattern = USERNAME_REGEX
-    if not re.search(USERNAME_REGEX, user_name):
+    if not re.search(USERNAME_REGEX, username):
         raise ValidationError(('invalid user name'))
