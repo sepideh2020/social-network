@@ -4,9 +4,8 @@ from django.db import models
 from django.db.models import Q
 from django.shortcuts import reverse
 from django.template.defaultfilters import slugify
-from django.utils.translation import ugettext_lazy as _
 from social_network import settings
-
+from common.validator import confirm_website, confirm_phone_number, confirm_user_name
 
 
 class CustomUserManager(BaseUserManager):
@@ -49,7 +48,6 @@ class CustomUserManager(BaseUserManager):
 
         available = [profile for profile in profiles if
                      profile not in accepted]  # all the available profile to invite
-        print(available)
         return available
 
     def get_all_profiles(self, me):
@@ -65,9 +63,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    username = models.CharField(_('Username'), max_length=100, unique=True)
+    username = models.CharField('Username', max_length=100, unique=True, validators=[confirm_user_name])
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
-    phone_number = models.CharField(_('Phone number'), max_length=11, blank=True, null=True, unique=True)
+    phone_number = models.CharField('Phone number', max_length=11, blank=True, null=True, unique=True,
+                                    validators=[confirm_phone_number])
     GENDER_CHOICE = (
         ('M', 'Male'),
         ('F', 'Female'),
@@ -75,13 +74,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     )
     gender = models.CharField(max_length=6, choices=GENDER_CHOICE, null=True)
     bio = models.TextField(default='no bio ...', max_length=300)
-    country = models.CharField(max_length=200, blank=True)
-    website = models.CharField(_('Website'), blank=True, max_length=150)
+    country = models.CharField(max_length=200, blank=True, validators=[confirm_website])
+    website = models.CharField('Website', blank=True, max_length=150)
     email = models.EmailField("email address", blank=True, null=True, unique=True)
     slug = models.SlugField(unique=True, blank=True)
-    is_active = models.BooleanField(_('active'), default=True)
-    is_superuser = models.BooleanField(_('superuser'), default=False)
-    is_staff = models.BooleanField(_('staff'), default=False)
+    is_active = models.BooleanField('active', default=True)
+    is_superuser = models.BooleanField('superuser', default=False)
+    is_staff = models.BooleanField('staff', default=False)
     friends = models.ManyToManyField('self', blank=True, related_name='friends')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
@@ -135,6 +134,8 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         defined at utils.py"""
         self.slug = slugify(str(self.username))
         super().save(*args, **kwargs)
+
+
 STATUS_CHOICES = (
     ('send', 'send'),
     ('accepted', 'accepted')
