@@ -17,24 +17,24 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+
+from profiles import views
 from profiles.views import RegisterUser, LoginView
 from .view import home_view
 from django.conf.urls import url
 from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import LogoutView
-from django.contrib.auth import views as auth_views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('signup/', RegisterUser.as_view(), name='signup'),
-    path('login/', LoginView.as_view(), name='login'),
+    path('signup/', RegisterUser, name='signup'),
+    path('reset/login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
-    path('password_reset/', auth_views.password_reset, name='password_reset'),
-    path('password_reset/done/', auth_views.password_reset_done, name='password_reset_done'),
-    path('reset/(?P<uidb64>[0-9A-Za-z_\-]+)/(?P<token>[0-9A-Za-z]{1,13}-[0-9A-Za-z]{1,20})/$',
-         auth_views.password_reset_confirm, name='password_reset_confirm'),
-    path('reset/done/', auth_views.password_reset_complete, name='password_reset_complete'),
+    # reset password
+    path('reset/', include('django.contrib.auth.urls')),  # password_reset/
+    path('activate/<slug:uidb64>/<slug:token>/',
+         views.activate, name='activate'),
     path('', home_view, name='home-view'),
     path('profiles/', include('profiles.urls', namespace='profiles')),
     path('posts/', include('posts.urls', namespace='posts')),
