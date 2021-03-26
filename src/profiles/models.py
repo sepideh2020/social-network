@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.shortcuts import reverse
 from django.template.defaultfilters import slugify
 from social_network import settings
-from common.validator import confirm_website, confirm_phone_number, confirm_user_name
+from common.validator import confirm_website, confirm_phone, confirm_username
 
 
 class CustomUserManager(BaseUserManager):
@@ -63,10 +63,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    username = models.CharField('Username', max_length=100, unique=True, validators=[confirm_user_name])
+    username = models.CharField('Username', max_length=100, unique=True, validators=[confirm_username])
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
-    phone_number = models.CharField('Phone number', max_length=11, blank=True, null=True, unique=True,
-                                    validators=[confirm_phone_number])
+    phone = models.CharField('Phone number', max_length=11, blank=True, null=True, unique=True,
+                                    validators=[confirm_phone])
     GENDER_CHOICE = (
         ('M', 'Male'),
         ('F', 'Female'),
