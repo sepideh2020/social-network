@@ -84,9 +84,13 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     friends = models.ManyToManyField('self', blank=True, related_name='friends')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
+
+    email_confirmed = models.BooleanField(default=False) ##
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'phone']
     objects = CustomUserManager()
+
+
 
     def __str__(self):
         return '{}-{}'.format(self.username, self.created.strftime('%d-%m-%Y'))

@@ -47,10 +47,6 @@ AUTHENTICATION_BACKENDS = (
 
 )
 
-AUTH_USER_MODEL = 'profiles.CustomUser'  #
-LOGIN_REDIRECT_URL = '../posts/'  #
-LOGOUT_REDIRECT_URL = '/login/'  #
-
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -138,3 +134,17 @@ STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static_cdn", "static_root
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static_cdn", "media_root")
+
+###redirect
+AUTH_USER_MODEL = 'profiles.CustomUser'  #
+LOGIN_REDIRECT_URL = 'home-view'  #
+LOGOUT_REDIRECT_URL = 'home-view'  #
+
+# email
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+# EMAIL_HOST_USER = 'sepideniktab2020@gmail.com'
+# EMAIL_HOST_PASSWORD = 'sepidehwashington'
+EMAIL_PORT = 587
+EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
+EMAIL_FILE_PATH = str(BASE_DIR.joinpath('sent_emails'))  # all sent emails will be saved in 'sent_emails' file
