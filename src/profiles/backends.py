@@ -5,8 +5,8 @@ from django.db.models import Q
 from profiles.models import CustomUser
 from django.contrib.auth import get_user_model
 
-
 UserModel = get_user_model()
+
 
 class PhoneEmailBackend(ModelBackend):
     def authenticate(self, request, username=None, password=None, **kwargs):
@@ -28,5 +28,4 @@ class PhoneEmailBackend(ModelBackend):
             user = CustomUser.objects.get(pk=user_id)
         except CustomUser.DoesNotExist:
             return None
-
         return user if self.user_can_authenticate(user) else None

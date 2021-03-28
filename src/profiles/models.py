@@ -5,7 +5,7 @@ from django.db.models import Q
 from django.shortcuts import reverse
 from django.template.defaultfilters import slugify
 from social_network import settings
-from common.validator import confirm_website, confirm_phone, confirm_username
+from utility.validator import confirm_website, confirm_phone, confirm_username
 
 
 class CustomUserManager(BaseUserManager):
@@ -85,7 +85,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    email_confirmed = models.BooleanField(default=False) ##
+    email_confirmed = models.BooleanField(default=False)
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'phone']
     objects = CustomUserManager()
