@@ -1,50 +1,47 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-
 from .models import CustomUser, Relationship
-from .forms import ProfileModelForm, SignUpForm, LoginForm
-from django.views.generic import ListView, DetailView, CreateView
+from .forms import ProfileModelForm ,LoginForm
+from django.views.generic import ListView, DetailView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views import View
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth import get_user_model
+from django.contrib.auth import  login
 from django.db.models import Q
 from django.contrib.auth import views as auth_views
 from .forms import SignUpForm
-from .tokens import account_activation_token
+from .tokens import account_activation_token, check_otp_expiration, get_random_otp, send_otp
 
 
 # class RegisterUser(CreateView):
-    # form_class = SignUpForm
-    # success_url = '/posts:main-post-view/'
-    # template_name = 'main/signup.html'
-    #
-    # def get(self, request, **kwargs):
-    #     form = SignUpForm()
-    #     return render(request, 'main/signup.html', {'form': form})
-    #
-    # def post(self, request, **kwargs):
-    #     form = SignUpForm(request.POST)
-    #     if form.is_valid():
-    #         form.save()
-    #         username = form.cleaned_data.get('username')
-    #         email = form.cleaned_data.get('email')
-    #         phone = form.cleaned_data.get('phone')
-    #         raw_password = form.cleaned_data.get('password1')
-    #
-    #         user = authenticate(username=username, email=email, phone=phone, password=raw_password)
-    #         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    #         return redirect('posts:main-post-view')
-    #     return render(request, 'main/signup.html', {'form': form})
-def RegisterUser(request):
+# form_class = SignUpForm
+# success_url = '/posts:main-post-view/'
+# template_name = 'main/signup.html'
+#
+# def get(self, request, **kwargs):
+#     form = SignUpForm()
+#     return render(request, 'main/signup.html', {'form': form})
+#
+# def post(self, request, **kwargs):
+#     form = SignUpForm(request.POST)
+#     if form.is_valid():
+#         form.save()
+#         username = form.cleaned_data.get('username')
+#         email = form.cleaned_data.get('email')
+#         phone = form.cleaned_data.get('phone')
+#         raw_password = form.cleaned_data.get('password1')
+#
+#         user = authenticate(username=username, email=email, phone=phone, password=raw_password)
+#         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+#         return redirect('posts:main-post-view')
+#     return render(request, 'main/signup.html', {'form': form})
+def SignupEmail(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
@@ -69,6 +66,71 @@ def RegisterUser(request):
         form = SignUpForm()
     return render(request, 'main/signup.html', {'form': form})
 
+
+def SignupPhone(request):
+    form = SignUpForm()
+    if request.method == "POST":
+        try:
+            if "phone" in request.POST:
+                phone = request.POST.get('phone')
+                user = CustomUser.objects.get(phone=phone)
+                # send otp
+                otp = get_random_otp()
+                # helper.send_otp(mobile, otp)
+                # save otp
+                print(otp)
+                user.otp = otp
+                user.save()
+                request.session['user_phone'] = user.phone
+                return HttpResponseRedirect(reverse('verify'))
+
+        except CustomUser.DoesNotExist:
+            form = SignUpForm(request.POST)
+            if form.is_valid():
+                user = form.save(commit=False)
+                # send otp
+                otp = get_random_otp()
+                send_otp(phone, otp)
+                # send_otp_soap(mobile, otp)
+                # save otp
+                print(otp)
+                user.otp = otp
+                user.is_active = False
+                user.save()
+                request.session['user_phone'] = user.phone
+                return HttpResponseRedirect(reverse('verify'))
+    return render(request, 'main/signup.html', {'form': form})
+
+def verify(request):
+    try:
+        phone = request.session.get('user_phone')
+        user = CustomUser.objects.get(phone=phone)
+
+        if request.method == "POST":
+
+            # check otp expiration
+            if not check_otp_expiration(user.phone):
+                # messages.error(request, "OTP is expired, please try again.")
+                return HttpResponseRedirect(reverse('register_view'))
+
+            if user.otp != int(request.POST.get('otp')):
+                # messages.error(request, "OTP is incorrect.")
+                return HttpResponseRedirect(reverse('verify'))
+
+            user.is_active = True
+            user.save()
+            login(request, user)
+            return HttpResponseRedirect(reverse('home-view'))
+
+        return render(request, 'main/verify.html', {'phone': phone})
+
+    except CustomUser.DoesNotExist:
+        # messages.error(request, "Error accorded, try again.")
+        return HttpResponseRedirect(reverse('signup-phone'))
+
+
+
+
 def activate(request, uidb64, token):
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))
@@ -90,7 +152,6 @@ def activate(request, uidb64, token):
 class LoginView(auth_views.LoginView):
     form_class = LoginForm
     template_name = 'main/login.html'
-
 
 
 @login_required
@@ -133,6 +194,7 @@ def invited_received_view(request):
         'is_empty': is_empty,
     }
     return render(request, 'profiles/my_invites.html', context)
+
 
 class invite_profiles_list_view(LoginRequiredMixin, ListView):
     """profiles list available to invite"""
@@ -314,5 +376,3 @@ def autocomplete(request):
             titles.append(person.username)
         return JsonResponse(titles, safe=False)
     return render(request, 'profiles/search.html')
-
-

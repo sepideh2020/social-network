@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<div>
+    <h2>Login / Register</h2>
+</div>
+<form action="." method="post">
+    {% csrf_token %}
+    <input type="text" value="{{ mobile }}" readonly disabled class="fadeIn second" name="mobile">
+    <input type="text" required class="fadeIn second" name="otp" placeholder="Enter OTP">
+    <input type="submit" class="fadeIn fourth" value="Check OTP">
+</form>
+</body>
+</html>

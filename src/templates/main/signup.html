@@ -8,15 +8,26 @@
         <div class="six wide column">
             <form  class="signup ui form"  method="post">
                 {% csrf_token %}
-                {% for field in form %}
+                <input type="text"  name="username" placeholder="Enter username">
+                <label for="Username">username</label>
+                <input type="number"  name="phone" placeholder="Enter phone">
+                <label for="phone">Phone</label>
+                <input type="email"  name="email" placeholder="Enter email">
+                <label for="email">Email</label>
+                <input type="password"  name="password1" placeholder="Enter Password1">
+                <label for="Password1">Password</label>
+                <input type="password"  name="password2" placeholder="Confirm Password">
+                <label for="Password2">Confirm Password</label>
 
-                        {{ field.label_tag }}<br>
-                        {{ field }}
-                        {% for error in field.errors %}
-                            <p style="color: red">{{ error }}</p>
-                        {% endfor %}
-
-                {% endfor %}
+{#                {% for field in form %}#}
+{##}
+{#                        {{ field.label_tag }}<br>#}
+{#                        {{ field }}#}
+{#                        {% for error in field.errors %}#}
+{#                            <p style="color: red">{{ error }}</p>#}
+{#                        {% endfor %}#}
+{##}
+{#                {% endfor %}#}
 
              <br><br><button class="ui button secondary" type="submit">{% trans "Sign Up" %}</button>
             </form>

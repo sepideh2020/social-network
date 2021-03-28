@@ -42,7 +42,7 @@ INSTALLED_APPS = [
 ]
 
 AUTHENTICATION_BACKENDS = (
-    'profiles.backends.PhoneEmailBackend',  #
+    'profiles.backends.PhoneEmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 
 )
@@ -148,3 +148,4 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_BACKEND = "django.core.mail.backends.filebased.EmailBackend"
 EMAIL_FILE_PATH = str(BASE_DIR.joinpath('sent_emails'))  # all sent emails will be saved in 'sent_emails' file
+Kavenegar_API = '66332B75723937332B436C4B5637465A2B69444F666C576574516474334D4255476C627638594E616571553D'

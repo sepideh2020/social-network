@@ -23,7 +23,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', False)
         return self._create_user(user_name, password, **extra_fields)
 
-    def create_superuser(self, user_name, password, **extra_fields):
+    def create_superuser(self, password, user_name, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
         return self._create_user(user_name, password, **extra_fields)
@@ -66,7 +66,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     username = models.CharField('Username', max_length=100, unique=True, validators=[confirm_username])
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
     phone = models.CharField('Phone number', max_length=11, blank=True, null=True, unique=True,
-                                    validators=[confirm_phone])
+                             validators=[confirm_phone])
     GENDER_CHOICE = (
         ('M', 'Male'),
         ('F', 'Female'),
@@ -86,11 +86,11 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     created = models.DateTimeField(auto_now_add=True)
 
     email_confirmed = models.BooleanField(default=False)
+    otp = models.PositiveIntegerField(blank=True, null=True)
+    otp_create_time = models.DateTimeField(auto_now=True)
     USERNAME_FIELD = 'username'
     REQUIRED_FIELDS = ['email', 'phone']
     objects = CustomUserManager()
-
-
 
     def __str__(self):
         return '{}-{}'.format(self.username, self.created.strftime('%d-%m-%Y'))

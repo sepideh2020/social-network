@@ -21,11 +21,6 @@ class SignUpForm(UserCreationForm):
         return cleaned_data
 
 
-class RegisterForm(UserCreationForm):
-    class Meta:
-        model = get_user_model()
-        fields = ('email', 'username', 'phone', 'password1', 'password2')
-
 
 class LoginForm(AuthenticationForm):
     username = forms.CharField(label='Email / Username/phone')
