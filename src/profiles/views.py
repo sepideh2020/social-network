@@ -44,7 +44,7 @@ from .tokens import account_activation_token
     #         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
     #         return redirect('posts:main-post-view')
     #     return render(request, 'main/signup.html', {'form': form})
-def RegisterUser(request):
+def SignupEmail(request):
     if request.method == 'POST':
         form = SignUpForm(request.POST)
         if form.is_valid():
@@ -86,6 +86,11 @@ def activate(request, uidb64, token):
     else:
         return render(request, 'main/acc_active_email.html')
 
+
+
+
+def SignupPhone(request):
+    pass
 
 class LoginView(auth_views.LoginView):
     form_class = LoginForm
