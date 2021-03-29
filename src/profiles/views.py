@@ -167,7 +167,7 @@ class Signup(View):
                 # send otp
                 otp = get_random_otp()
                 # send_otp(phone, otp)
-                # send_otp_soap(mobile, otp)
+
                 # save otp
                 print(otp)
                 user.otp = otp
@@ -200,8 +200,7 @@ class Signup(View):
                 user = form.save(commit=False)
                 # send otp
                 otp = get_random_otp()
-                # send_otp(phone, otp)
-                # send_otp_soap(mobile, otp)
+                # send_otp(phone, otp))
                 # save otp
                 print(otp)
                 user.otp = otp
