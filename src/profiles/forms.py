@@ -1,11 +1,13 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.core.exceptions import ValidationError
-
 from .models import CustomUser
 
 
 class SignUpForm(UserCreationForm):
+    """
+    form for Signup
+    """
 
     class Meta:
         model = CustomUser
@@ -20,10 +22,17 @@ class SignUpForm(UserCreationForm):
 
 
 class LoginForm(AuthenticationForm):
+    """
+    Form for logging
+    """
     username = forms.CharField(label='Email / Username/phone')
 
 
 class ProfileModelForm(forms.ModelForm):
+    """
+    Form for updating user profile
+    """
+
     class Meta:
         model = CustomUser
         fields = ('first_name', 'last_name', 'bio', 'website', 'avatar')

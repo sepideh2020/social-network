@@ -1,50 +1,30 @@
+from django.contrib.auth import login
+from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
+from django.db.models import Q
 from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.shortcuts import render, redirect
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views.generic import ListView, DetailView
 from django.views.generic.base import View
 
-from .models import CustomUser, Relationship
 from .forms import ProfileModelForm, LoginForm
-from django.views.generic import ListView, DetailView
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render, redirect
-from django.contrib.auth import login
-from django.db.models import Q
-from django.contrib.auth import views as auth_views
 from .forms import SignUpForm
+from .models import CustomUser, Relationship
 from .tokens import account_activation_token, check_otp_expiration, get_random_otp, send_otp
 
 
-# class RegisterUser(CreateView):
-# form_class = SignUpForm
-# success_url = '/posts:main-post-view/'
-# template_name = 'main/signup.html'
-#
-# def get(self, request, **kwargs):
-#     form = SignUpForm()
-#     return render(request, 'main/signup.html', {'form': form})
-#
-# def post(self, request, **kwargs):
-#     form = SignUpForm(request.POST)
-#     if form.is_valid():
-#         form.save()
-#         username = form.cleaned_data.get('username')
-#         email = form.cleaned_data.get('email')
-#         phone = form.cleaned_data.get('phone')
-#         raw_password = form.cleaned_data.get('password1')
-#
-#         user = authenticate(username=username, email=email, phone=phone, password=raw_password)
-#         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-#         return redirect('posts:main-post-view')
-#     return render(request, 'main/signup.html', {'form': form})
-
 def activate(request, uidb64, token):
+    """
+        function for activating user account when  user signed up  by email
+    """
     try:
         uid = force_text(urlsafe_base64_decode(uidb64))
         user = CustomUser.objects.get(pk=uid)
@@ -52,17 +32,44 @@ def activate(request, uidb64, token):
         user = None
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
-        user.save()
-        # login(request, user)
-        # return redirect('home')
-        # return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
         login(request, user, backend='profiles.backends.PhoneEmailBackend')
         return redirect('home-view')
     else:
         return render(request, 'main/acc_active_email.html')
 
 
+def verify(request):
+    """
+        function for activating user account when user signed up  by phone
+    """
+    try:
+        phone = request.session.get('user_phone')
+        user = CustomUser.objects.get(phone=phone)
+
+        if request.method == "POST":
+
+            # check otp expiration
+            if not check_otp_expiration(user.phone):
+                return HttpResponseRedirect(reverse('register_view'))
+
+            if user.otp != int(request.POST.get('otp')):
+                return HttpResponseRedirect(reverse('verify'))
+
+            user.is_active = True
+            user.save()
+            login(request, user, backend='profiles.backends.PhoneEmailBackend')
+            return HttpResponseRedirect(reverse('home-view'))
+
+        return render(request, 'main/verify.html', {'phone': phone})
+
+    except CustomUser.DoesNotExist:
+        return HttpResponseRedirect(reverse('signup-phone'))
+
+
 def SignupEmail(request):
+    """
+        Signing up by email
+    """
     form = SignUpForm(request.POST)
     if request.method == 'POST':
 
@@ -89,35 +96,10 @@ def SignupEmail(request):
     return render(request, 'main/signup.html', {'form': form})
 
 
-def verify(request):
-    try:
-        phone = request.session.get('user_phone')
-        user = CustomUser.objects.get(phone=phone)
-
-        if request.method == "POST":
-
-            # check otp expiration
-            if not check_otp_expiration(user.phone):
-                # messages.error(request, "OTP is expired, please try again.")
-                return HttpResponseRedirect(reverse('register_view'))
-
-            if user.otp != int(request.POST.get('otp')):
-                # messages.error(request, "OTP is incorrect.")
-                return HttpResponseRedirect(reverse('verify'))
-
-            user.is_active = True
-            user.save()
-            login(request, user, backend='profiles.backends.PhoneEmailBackend')
-            return HttpResponseRedirect(reverse('home-view'))
-
-        return render(request, 'main/verify.html', {'phone': phone})
-
-    except CustomUser.DoesNotExist:
-        # messages.error(request, "Error accorded, try again.")
-        return HttpResponseRedirect(reverse('signup-phone'))
-
-
 def SignupPhone(request):
+    """
+    Signing up by phone
+    """
     form = SignUpForm()
     if request.method == "POST":
         try:
@@ -153,6 +135,14 @@ def SignupPhone(request):
 
 
 class Signup(View):
+    """
+        Sign up function,if user signed up by email,her/his account will be verified by sending verification email
+        ,in this project email will be stored in sent_emails directory.
+        if user signs up by phone a SMS will be sent to his/her phone  which contains Token number.
+        if user fills both phone email filled his/her account will ber verified by sending SMS which contains
+        Token number
+    """
+
     def get(self, request):
         form = SignUpForm()
         return render(request, 'main/signup.html', {'form': form})
@@ -166,8 +156,7 @@ class Signup(View):
                 user = form.save(commit=False)
                 # send otp
                 otp = get_random_otp()
-                # send_otp(phone, otp)
-
+                send_otp(phone, otp)
                 # save otp
                 print(otp)
                 user.otp = otp
@@ -200,7 +189,7 @@ class Signup(View):
                 user = form.save(commit=False)
                 # send otp
                 otp = get_random_otp()
-                # send_otp(phone, otp))
+                send_otp(phone, otp)
                 # save otp
                 print(otp)
                 user.otp = otp
@@ -213,12 +202,18 @@ class Signup(View):
 
 
 class LoginView(auth_views.LoginView):
+    """
+        View for loading logging form
+    """
     form_class = LoginForm
     template_name = 'main/login.html'
 
 
 @login_required
 def my_profile_view(request):
+    """
+        for displaying User profile information
+    """
     profile = CustomUser.objects.get(id__exact=request.user.id)
     form = ProfileModelForm(request.POST or None, request.FILES or None, instance=profile)
     posts = profile.get_all_authors_posts()
@@ -271,7 +266,9 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
         return qs
 
     def get_context_data(self, **kwargs):
-        """this function allows us to some additional context to the template"""
+        """
+        this function allows us to some additional context to the template
+        """
         context = super().get_context_data(**kwargs)
         user = CustomUser.objects.get(username__iexact=self.request.user.username)  # it gets user the user
         profile = CustomUser.objects.get(id__exact=user.id)
@@ -295,7 +292,7 @@ class invite_profiles_list_view(LoginRequiredMixin, ListView):
 
 
 @login_required
-def accept_invatation(request):
+def accept_invitation(request):
     if request.method == "POST":
         pk = request.POST.get('profile_pk')
         sender = CustomUser.objects.get(pk=pk)
@@ -308,7 +305,7 @@ def accept_invatation(request):
 
 
 @login_required
-def reject_invatation(request):
+def reject_invitation(request):
     if request.method == "POST":
         pk = request.POST.get('profile_pk')
         receiver = CustomUser.objects.get(id__exact=request.user.id)

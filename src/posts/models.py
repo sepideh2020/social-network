@@ -1,12 +1,13 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from profiles.models import CustomUser
-
-# Create your models here.
 from social_network import settings
 
 
 class Post(models.Model):
+    """
+           model for Posts
+    """
     content = models.TextField()
     image = models.ImageField(upload_to='posts', validators=[FileExtensionValidator(['png', 'jpg', 'jpeg'])],
                               blank=True)
@@ -34,6 +35,9 @@ class Post(models.Model):
 
 
 class Comment(models.Model):
+    """
+        model for Comments
+    """
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     post = models.ForeignKey(Post, on_delete=models.CASCADE)
     body = models.TextField(max_length=300)

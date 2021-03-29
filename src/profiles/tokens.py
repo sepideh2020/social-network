@@ -1,11 +1,9 @@
 import datetime
 from random import randint
-
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 import six
 from django.utils import timezone
 from kavenegar import KavenegarAPI, HTTPException, APIException
-
 from posts import models
 from social_network.settings import Kavenegar_API
 from .models import CustomUser
@@ -13,6 +11,10 @@ from datetime import datetime, timezone
 
 
 class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
+    """
+        creates token for verifying by email
+    """
+
     def _make_hash_value(self, user, timestamp):
         return (
                 six.text_type(user.pk) + six.text_type(timestamp) +
@@ -24,6 +26,9 @@ account_activation_token = AccountActivationTokenGenerator()
 
 
 def send_otp(phone, otp):
+    """
+        sending OTP to the user phone for verifying by phone
+    """
     phone = [phone, ]
     try:
         api = KavenegarAPI(Kavenegar_API)
@@ -42,10 +47,16 @@ def send_otp(phone, otp):
 
 
 def get_random_otp():
+    """
+        creating random number for generating OTP
+    """
     return randint(1000, 9999)
 
 
 def check_otp_expiration(phone):
+    """
+        check whether OTP is expired or not
+    """
     try:
         user = models.CustomUser.objects.get(phone=phone)
         now = datetime.now(timezone.utc)
