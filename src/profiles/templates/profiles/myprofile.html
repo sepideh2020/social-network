@@ -82,7 +82,9 @@
                             <td>
                                 <ul>
                                     {% for friend in profile.get_friends %}
-                                        <a href="{% url 'profiles:profile-detail-view'  friend.slug %}"><li>{{ friend }}</li></a>
+                                        <a href="{% url 'profiles:profile-detail-view'  friend.slug %}">
+                                            <li>{{ friend }}</li>
+                                        </a>
                                     {% endfor %}
                                 </ul>
                             </td>
@@ -91,14 +93,14 @@
                             <td>number of posts</td>
                             <td>{{ profile.get_posts_no }}</td>
                         </tr>
-                        <tr>
-                            <td>number of likes given</td>
-                            <td>{{ profile.get_likes_given_no }}</td>
-                        </tr>
-                        <tr>
-                            <td>number of likes received</td>
-                            <td>{{ profile.get_likes_received_no }}</td>
-                        </tr>
+                        {#                        <tr>#}
+                        {#                            <td>number of likes given</td>#}
+                        {#                            <td>{{ profile.get_likes_given_no }}</td>#}
+                        {#                        </tr>#}
+                        {#                        <tr>#}
+                        {#                            <td>number of likes received</td>#}
+                        {#                            <td>{{ profile.get_likes_received_no }}</td>#}
+                        {#                        </tr>#}
 
 
                         </tbody>
@@ -113,12 +115,12 @@
                 <div class="right floated meta">
                     <div class="ui grid">
                         <div class="row">
-                                <a href="{% url 'posts:post-update' post.pk %}">
-                                    <button class="ui button bwhite-lg ">Update</button>
-                                </a>
-                                <a href="{% url 'posts:post-delete' post.pk %}">
-                                    <button class="ui button bwhite-lg ">Delete</button>
-                                </a>
+                            <a href="{% url 'posts:post-update' post.pk %}">
+                                <button class="ui button bwhite-lg ">Update</button>
+                            </a>
+                            <a href="{% url 'posts:post-delete' post.pk %}">
+                                <button class="ui button bwhite-lg ">Delete</button>
+                            </a>
                         </div>
                     </div>
 

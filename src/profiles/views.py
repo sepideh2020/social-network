@@ -1,52 +1,71 @@
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.mail import EmailMessage
-from django.http import JsonResponse, HttpResponse
-from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.urls import reverse
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.views.generic.base import View
 
 from .models import CustomUser, Relationship
-from .forms import ProfileModelForm, SignUpForm, LoginForm
-from django.views.generic import ListView, DetailView, CreateView
+from .forms import ProfileModelForm, LoginForm, RegistrationType
+from django.views.generic import ListView, DetailView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views import View
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
-from django.contrib.auth.backends import ModelBackend
-from django.contrib.auth import get_user_model
+from django.contrib.auth import login
 from django.db.models import Q
 from django.contrib.auth import views as auth_views
 from .forms import SignUpForm
-from .tokens import account_activation_token
+from .tokens import account_activation_token, check_otp_expiration, get_random_otp, send_otp
 
 
 # class RegisterUser(CreateView):
-    # form_class = SignUpForm
-    # success_url = '/posts:main-post-view/'
-    # template_name = 'main/signup.html'
-    #
-    # def get(self, request, **kwargs):
-    #     form = SignUpForm()
-    #     return render(request, 'main/signup.html', {'form': form})
-    #
-    # def post(self, request, **kwargs):
-    #     form = SignUpForm(request.POST)
-    #     if form.is_valid():
-    #         form.save()
-    #         username = form.cleaned_data.get('username')
-    #         email = form.cleaned_data.get('email')
-    #         phone = form.cleaned_data.get('phone')
-    #         raw_password = form.cleaned_data.get('password1')
-    #
-    #         user = authenticate(username=username, email=email, phone=phone, password=raw_password)
-    #         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-    #         return redirect('posts:main-post-view')
-    #     return render(request, 'main/signup.html', {'form': form})
+# form_class = SignUpForm
+# success_url = '/posts:main-post-view/'
+# template_name = 'main/signup.html'
+#
+# def get(self, request, **kwargs):
+#     form = SignUpForm()
+#     return render(request, 'main/signup.html', {'form': form})
+#
+# def post(self, request, **kwargs):
+#     form = SignUpForm(request.POST)
+#     if form.is_valid():
+#         form.save()
+#         username = form.cleaned_data.get('username')
+#         email = form.cleaned_data.get('email')
+#         phone = form.cleaned_data.get('phone')
+#         raw_password = form.cleaned_data.get('password1')
+#
+#         user = authenticate(username=username, email=email, phone=phone, password=raw_password)
+#         login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+#         return redirect('posts:main-post-view')
+#     return render(request, 'main/signup.html', {'form': form})
+
+def activate(request, uidb64, token):
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = CustomUser.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
+        user = None
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        # login(request, user)
+        # return redirect('home')
+        # return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
+        login(request, user, backend='profiles.backends.PhoneEmailBackend')
+        return redirect('home-view')
+    else:
+        return render(request, 'main/acc_active_email.html')
+
+
 def SignupEmail(request):
+    form = SignUpForm(request.POST)
     if request.method == 'POST':
-        form = SignUpForm(request.POST)
+
         if form.is_valid():
             user = form.save(commit=False)
             user.is_active = False
@@ -69,33 +88,102 @@ def SignupEmail(request):
         form = SignUpForm()
     return render(request, 'main/signup.html', {'form': form})
 
-def activate(request, uidb64, token):
+
+def verify(request):
     try:
-        uid = force_text(urlsafe_base64_decode(uidb64))
-        user = CustomUser.objects.get(pk=uid)
-    except(TypeError, ValueError, OverflowError, CustomUser.DoesNotExist):
-        user = None
-    if user is not None and account_activation_token.check_token(user, token):
-        user.is_active = True
-        user.save()
-        # login(request, user)
-        # return redirect('home')
-        # return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
-        login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        return redirect('home-view')
-    else:
-        return render(request, 'main/acc_active_email.html')
+        phone = request.session.get('user_phone')
+        user = CustomUser.objects.get(phone=phone)
 
+        if request.method == "POST":
 
+            # check otp expiration
+            if not check_otp_expiration(user.phone):
+                # messages.error(request, "OTP is expired, please try again.")
+                return HttpResponseRedirect(reverse('register_view'))
+
+            if user.otp != int(request.POST.get('otp')):
+                # messages.error(request, "OTP is incorrect.")
+                return HttpResponseRedirect(reverse('verify'))
+
+            user.is_active = True
+            user.save()
+            login(request, user, backend='profiles.backends.PhoneEmailBackend')
+            return HttpResponseRedirect(reverse('home-view'))
+
+        return render(request, 'main/verify.html', {'phone': phone})
+
+    except CustomUser.DoesNotExist:
+        # messages.error(request, "Error accorded, try again.")
+        return HttpResponseRedirect(reverse('signup-phone'))
 
 
 def SignupPhone(request):
-    pass
+    form = SignUpForm()
+    if request.method == "POST":
+        try:
+            if "phone" in request.POST:
+                phone = request.POST.get('phone')
+                user = CustomUser.objects.get(phone=phone)
+                # send otp
+                otp = get_random_otp()
+                # helper.send_otp(mobile, otp)
+                # save otp
+                print(otp)
+                user.otp = otp
+                user.save()
+                request.session['user_phone'] = user.phone
+                return HttpResponseRedirect(reverse('verify'))
+
+        except CustomUser.DoesNotExist:
+            form = SignUpForm(request.POST)
+            if form.is_valid():
+                user = form.save(commit=False)
+                # send otp
+                otp = get_random_otp()
+                # send_otp(phone, otp)
+                # send_otp_soap(mobile, otp)
+                # save otp
+                print(otp)
+                user.otp = otp
+                user.is_active = False
+                user.save()
+                request.session['user_phone'] = user.phone
+                return HttpResponseRedirect(reverse('verify'))
+    return render(request, 'main/signup.html', {'form': form})
+
+
+def Signup(request):
+    form = SignUpForm()
+    if request.method == "POST":
+        try:
+            if "phone" in request.POST:
+                # return SignupPhone(request)
+                return HttpResponseRedirect(reverse('signup-phone'))
+            if "email" in request.POST:
+                # return SignupEmail(request)
+                return HttpResponseRedirect(reverse('signup-email'))
+            if "email" in request.POST and "phone" in request.POST:
+                return HttpResponseRedirect(reverse('signup-registration-type'))
+
+        except Exception:
+            raise ValueError
+    return render(request, 'main/signup.html', {'form': form})
+
+
+class SignupRegistrationType(View):
+    form_class = RegistrationType
+    template_name = 'main/choose_registration.html'
+
+    def get_queryset(self):
+        if "email" in self.request.POST:
+            return HttpResponseRedirect(reverse('signup-email'))
+        if "phone" in self.request.POST:
+            return HttpResponseRedirect(reverse('signup-phone'))
+
 
 class LoginView(auth_views.LoginView):
     form_class = LoginForm
     template_name = 'main/login.html'
-
 
 
 @login_required
@@ -138,6 +226,7 @@ def invited_received_view(request):
         'is_empty': is_empty,
     }
     return render(request, 'profiles/my_invites.html', context)
+
 
 class invite_profiles_list_view(LoginRequiredMixin, ListView):
     """profiles list available to invite"""
@@ -319,5 +408,3 @@ def autocomplete(request):
             titles.append(person.username)
         return JsonResponse(titles, safe=False)
     return render(request, 'profiles/search.html')
-
-

@@ -12,6 +12,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 @login_required
 def post_comment_create_and_list_view(request):
+    """
+    comment
+    """
     # list_of_friends=request.user.get_friends()
     # before saving form we need to have author to be assigned to the field of author in the post model so
     # we need to get the profile be request.user

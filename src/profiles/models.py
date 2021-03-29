@@ -4,30 +4,29 @@ from django.db import models
 from django.db.models import Q
 from django.shortcuts import reverse
 from django.template.defaultfilters import slugify
-from django.utils.translation import ugettext_lazy as _
 from social_network import settings
-
+from utility.validator import confirm_website, confirm_phone, confirm_username
 
 
 class CustomUserManager(BaseUserManager):
     """Define a model manager for User model with no username field."""
     use_in_migrations = True
 
-    def _create_user(self, username, password, **extra_fields):
-        user = self.model(username=username, **extra_fields)
+    def _create_user(self, user_name, password, **extra_fields):
+        user = self.model(user_name=user_name, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_user(self, username, password=None, **extra_fields):
+    def create_user(self, user_name, password=None, **extra_fields):
         extra_fields.setdefault('is_superuser', False)
         extra_fields.setdefault('is_staff', False)
-        return self._create_user(username, password, **extra_fields)
+        return self._create_user(user_name, password, **extra_fields)
 
-    def create_superuser(self, username, password, **extra_fields):
+    def create_superuser(self, password, user_name, **extra_fields):
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_staff', True)
-        return self._create_user(username, password, **extra_fields)
+        return self._create_user(user_name, password, **extra_fields)
 
     def get_all_profiles_to_invite(self, sender):
         """gets all the profiles that are available for us to invite so cases of profiles where we are already
@@ -49,7 +48,6 @@ class CustomUserManager(BaseUserManager):
 
         available = [profile for profile in profiles if
                      profile not in accepted]  # all the available profile to invite
-        print(available)
         return available
 
     def get_all_profiles(self, me):
@@ -65,9 +63,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     """
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    username = models.CharField(_('Username'), max_length=100, unique=True)
+    username = models.CharField('Username', max_length=100, unique=True, validators=[confirm_username])
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
-    phone = models.CharField(_('Phone number'), max_length=13, blank=True, null=True, unique=True)
+    phone = models.CharField('Phone number', max_length=11, blank=True, null=True, unique=True,
+                             validators=[confirm_phone])
     GENDER_CHOICE = (
         ('M', 'Male'),
         ('F', 'Female'),
@@ -75,23 +74,23 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     )
     gender = models.CharField(max_length=6, choices=GENDER_CHOICE, null=True)
     bio = models.TextField(default='no bio ...', max_length=300)
-    country = models.CharField(max_length=200, blank=True)
-    website = models.CharField(_('Website'), blank=True, max_length=150)
+    country = models.CharField(max_length=200, blank=True, validators=[confirm_website])
+    website = models.CharField('Website', blank=True, max_length=150)
     email = models.EmailField("email address", blank=True, null=True, unique=True)
     slug = models.SlugField(unique=True, blank=True)
-    is_active = models.BooleanField(_('active'), default=True)
-    is_superuser = models.BooleanField(_('superuser'), default=False)
-    is_staff = models.BooleanField(_('staff'), default=False)
+    is_active = models.BooleanField('active', default=True)
+    is_superuser = models.BooleanField('superuser', default=False)
+    is_staff = models.BooleanField('staff', default=False)
     friends = models.ManyToManyField('self', blank=True, related_name='friends')
     updated = models.DateTimeField(auto_now=True)
     created = models.DateTimeField(auto_now_add=True)
 
-    email_confirmed = models.BooleanField(default=False) ##
+    email_confirmed = models.BooleanField(default=False)
+    otp = models.PositiveIntegerField(blank=True, null=True)
+    otp_create_time = models.DateTimeField(auto_now=True)
     USERNAME_FIELD = 'username'
-    REQUIRED_FIELDS = ['email','phone']
+    REQUIRED_FIELDS = ['email', 'phone']
     objects = CustomUserManager()
-
-
 
     def __str__(self):
         return '{}-{}'.format(self.username, self.created.strftime('%d-%m-%Y'))
@@ -139,6 +138,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
         defined at utils.py"""
         self.slug = slugify(str(self.username))
         super().save(*args, **kwargs)
+
 
 STATUS_CHOICES = (
     ('send', 'send'),

@@ -19,17 +19,19 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from profiles import views
-from profiles.views import SignupEmail, LoginView
+from profiles.views import SignupEmail, LoginView, SignupPhone, verify, Signup, SignupRegistrationType
+
 from .view import home_view
-from django.conf.urls import url
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('signup-email/',SignupEmail, name='signup-email'),
-    path('signup-phone/',SignupPhone, name='signup-phone'),
+    path('signup/', Signup, name='signup'),
+    path('signup-email/', SignupEmail, name='signup-email'),
+    path('signup-phone/', SignupPhone, name='signup-phone'),
+    path('signup-registration-type/',SignupRegistrationType.as_view(), name='signup-registration-type'),
+    path('verify/', verify, name='verify'),
     path('reset/login/', LoginView.as_view(), name='login'),
     path('logout/', LogoutView.as_view(), name='logout'),
     # reset password
