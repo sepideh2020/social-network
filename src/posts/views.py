@@ -9,19 +9,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-
 @login_required
 def post_comment_create_and_list_view(request):
     """
-    comment
+    before saving form we need to have author to be assigned to the field of author in the post model so
+    we need to get the profile be request.user
     """
-    # list_of_friends=request.user.get_friends()
-    # before saving form we need to have author to be assigned to the field of author in the post model so
-    # we need to get the profile be request.user
-
-    # initial
     p_form = PostModelForm()
-    # we used request.Files because we might send an image
     c_form = CommentModelForm()
     post_added = False
     persons = "No result"
@@ -32,7 +26,6 @@ def post_comment_create_and_list_view(request):
     if 'submit_p_form' in request.POST:
         # used the name of the form to understand which form was submitted
         # by using if we understand which form was submitted
-        # print(request.POST)
         p_form = PostModelForm(request.POST, request.FILES)
 
         if p_form.is_valid():
@@ -69,6 +62,9 @@ def post_comment_create_and_list_view(request):
 
 @login_required
 def like_unlike_post(request):
+    """
+    method for managing like and unlike posts
+    """
     user = request.user  # user that is logged in
     if request.method == 'POST':
         post_id = request.POST.get('post_id')
@@ -120,6 +116,9 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
 
 
 class PostUpdateView(LoginRequiredMixin, UpdateView):
+    """
+    Updating posts
+    """
     form_class = PostModelForm
     model = Post
     template_name = 'posts/update.html'
@@ -135,15 +134,13 @@ class PostUpdateView(LoginRequiredMixin, UpdateView):
 
 
 class CommentDeleteView(LoginRequiredMixin, DeleteView):
-    """the function increase security and prevents deleting of the post by other users who knows url of a page
-       and only the author can delete the post"""
+    """
+       the function increase security and prevents deleting of the post by other users who knows url of a page
+       and only the author can delete the post
+    """
     model = Comment
     template_name = 'posts/confirm_del.html'
     success_url = reverse_lazy('posts:main-post-view')  # redirects to the main-post-view
-
-    # success_url = '/posts/'
-    # it indicates once we successfully delete a post where should we be taken
-    # reverse is for function views and reverse_lazy is for class views
 
     def get_object(self, *args, **kwargs):
         pk = self.kwargs.get('pk')

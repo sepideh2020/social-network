@@ -9,7 +9,9 @@ from utility.validator import confirm_website, confirm_phone, confirm_username
 
 
 class CustomUserManager(BaseUserManager):
-    """Define a model manager for User model with no username field."""
+    """
+    Define a model manager for User model with no username field.
+    """
     use_in_migrations = True
 
     def _create_user(self, user_name, password, **extra_fields):
@@ -29,10 +31,13 @@ class CustomUserManager(BaseUserManager):
         return self._create_user(user_name, password, **extra_fields)
 
     def get_all_profiles_to_invite(self, sender):
-        """gets all the profiles that are available for us to invite so cases of profiles where we are already
+
+        """
+        gets all the profiles that are available for us to invite so cases of profiles where we are already
         in a relationship with were excluded.
         Here the sender is ourselves and the receiver is different user with whom we dont have a relationship status
-        set to 'accepted' """
+        set to 'accepted'
+        """
 
         profiles = CustomUser.objects.all().exclude(id__exact=sender.id)
         profile = CustomUser.objects.get(id__exact=sender.id)
@@ -51,7 +56,9 @@ class CustomUserManager(BaseUserManager):
         return available
 
     def get_all_profiles(self, me):
-        """gets all the profiles that are in the system excluding our own"""
+        """
+        gets all the profiles that are in the system excluding our own
+        """
 
         profiles = CustomUser.objects.all().exclude(id__exact=me.id)
         return profiles
