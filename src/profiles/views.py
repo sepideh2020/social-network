@@ -76,7 +76,7 @@ def SignupPhone(request):
                 user = CustomUser.objects.get(phone=phone)
                 # send otp
                 otp = get_random_otp()
-                # helper.send_otp(mobile, otp)
+                # send_otp(phone, otp)
                 # save otp
                 print(otp)
                 user.otp = otp
@@ -90,7 +90,7 @@ def SignupPhone(request):
                 user = form.save(commit=False)
                 # send otp
                 otp = get_random_otp()
-                send_otp(phone, otp)
+                # send_otp(phone, otp)
                 # send_otp_soap(mobile, otp)
                 # save otp
                 print(otp)
@@ -111,7 +111,7 @@ def verify(request):
             # check otp expiration
             if not check_otp_expiration(user.phone):
                 # messages.error(request, "OTP is expired, please try again.")
-                return HttpResponseRedirect(reverse('register_view'))
+                return HttpResponseRedirect(reverse('signup-phone'))
 
             if user.otp != int(request.POST.get('otp')):
                 # messages.error(request, "OTP is incorrect.")

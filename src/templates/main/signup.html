@@ -8,16 +8,16 @@
         <div class="six wide column">
             <form  class="signup ui form"  method="post">
                 {% csrf_token %}
-                <input type="text"  name="username" placeholder="Enter username">
                 <label for="Username">username</label>
-                <input type="number"  name="phone" placeholder="Enter phone">
+                <input type="text"  name="username" placeholder="Enter username">
                 <label for="phone">Phone</label>
-                <input type="email"  name="email" placeholder="Enter email">
+                <input type="number"  name="phone" placeholder="Enter phone">
                 <label for="email">Email</label>
-                <input type="password"  name="password1" placeholder="Enter Password1">
+                <input type="email"  name="email" placeholder="Enter email">
                 <label for="Password1">Password</label>
-                <input type="password"  name="password2" placeholder="Confirm Password">
+                <input type="password"  name="password1" placeholder="Enter Password1">
                 <label for="Password2">Confirm Password</label>
+                <input type="password"  name="password2" placeholder="Confirm Password">
 
 {#                {% for field in form %}#}
 {##}

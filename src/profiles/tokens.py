@@ -1,14 +1,11 @@
-import datetime
 from random import randint
-
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 import six
 from kavenegar import KavenegarAPI, HTTPException, APIException
-
 from posts import models
 from social_network.settings import Kavenegar_API
 from .models import CustomUser
-
+from datetime import datetime, timezone
 
 class AccountActivationTokenGenerator(PasswordResetTokenGenerator):
     def _make_hash_value(self, user, timestamp):
@@ -46,11 +43,9 @@ def get_random_otp():
 def check_otp_expiration(phone):
     try:
         user = models.CustomUser.objects.get(phone=phone)
-        now = datetime.datetime.now()
         otp_time = user.otp_create_time
-        diff_time = now - otp_time
+        diff_time = datetime.now(timezone.utc) - otp_time
         print('OTP TIME: ', diff_time)
-
         if diff_time.seconds > 120:
             return False
         return True
