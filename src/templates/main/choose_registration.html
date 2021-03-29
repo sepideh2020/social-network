@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% block head_title %}{% trans "Confirmation" %}{% endblock %}
+
+{% block content %}
+    <form>
+        <div class="ui form">
+
+            <div class="inline fields">
+                <label>How do you want to confirm your registration</label>
+                <div class="field">
+                    <div class="ui radio checkbox">
+                        <input type="radio" name="phone" tabindex="0" class="hidden">
+                        <label>Sending SMS</label>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <div class="ui radio checkbox">
+                        <input type="radio" name="email" tabindex="0" class="hidden">
+                        <label>Sending Email</label>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+{% endblock %}

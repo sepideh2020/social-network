@@ -21,7 +21,6 @@ class SignUpForm(UserCreationForm):
         return cleaned_data
 
 
-
 class LoginForm(AuthenticationForm):
     username = forms.CharField(label='Email / Username/phone')
 
@@ -30,3 +29,8 @@ class ProfileModelForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ('first_name', 'last_name', 'bio', 'website', 'avatar')
+
+
+class RegistrationType(forms.Form):
+    phone = forms.BooleanField()
+    email = forms.BooleanField()
