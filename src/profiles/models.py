@@ -65,7 +65,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=100)
     username = models.CharField('Username', max_length=100, unique=True, validators=[confirm_username])
     avatar = models.ImageField(default='avatar.png', upload_to='avatars/')  # profile picture
-    phone = models.CharField('Phone number', max_length=11, blank=True, null=True, unique=True,
+    phone = models.CharField('Phone number', max_length=13, blank=True, null=True, unique=True,
                              validators=[confirm_phone])
     GENDER_CHOICE = (
         ('M', 'Male'),

@@ -30,7 +30,3 @@ class ProfileModelForm(forms.ModelForm):
         model = CustomUser
         fields = ('first_name', 'last_name', 'bio', 'website', 'avatar')
 
-
-class RegistrationType(forms.Form):
-    phone = forms.BooleanField()
-    email = forms.BooleanField()

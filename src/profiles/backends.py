@@ -17,8 +17,8 @@ class PhoneEmailBackend(ModelBackend):
             CustomUser().set_password(password)
         except MultipleObjectsReturned:
             return CustomUser.objects.filter(email=username).order_by('id').first()
-        except:
-            return CustomUser.objects.filter(phone=username).order_by('id').first()
+        # except:
+        #     return CustomUser.objects.filter(phone=username).order_by('id').first()
         else:
             if user.check_password(password) and self.user_can_authenticate(user):
                 return user

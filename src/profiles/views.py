@@ -9,7 +9,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.generic.base import View
 
 from .models import CustomUser, Relationship
-from .forms import ProfileModelForm, LoginForm, RegistrationType
+from .forms import ProfileModelForm, LoginForm
 from django.views.generic import ListView, DetailView
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -152,33 +152,65 @@ def SignupPhone(request):
     return render(request, 'main/signup.html', {'form': form})
 
 
-def Signup(request):
-    form = SignUpForm()
-    if request.method == "POST":
-        try:
-            if "phone" in request.POST:
-                # return SignupPhone(request)
-                return HttpResponseRedirect(reverse('signup-phone'))
-            if "email" in request.POST:
-                # return SignupEmail(request)
-                return HttpResponseRedirect(reverse('signup-email'))
-            if "email" in request.POST and "phone" in request.POST:
-                return HttpResponseRedirect(reverse('signup-registration-type'))
+class Signup(View):
+    def get(self, request):
+        form = SignUpForm()
+        return render(request, 'main/signup.html', {'form': form})
 
-        except Exception:
-            raise ValueError
-    return render(request, 'main/signup.html', {'form': form})
+    def post(self, request):
+        form = SignUpForm(request.POST)
 
+        if form.is_valid():
+            if form.cleaned_data['phone'] and form.cleaned_data['email']:
+                phone = request.POST.get('phone')
+                user = form.save(commit=False)
+                # send otp
+                otp = get_random_otp()
+                # send_otp(phone, otp)
+                # send_otp_soap(mobile, otp)
+                # save otp
+                print(otp)
+                user.otp = otp
+                user.is_active = False
+                user.save()
+                request.session['user_phone'] = user.phone
+                return HttpResponseRedirect(reverse('verify'))
 
-class SignupRegistrationType(View):
-    form_class = RegistrationType
-    template_name = 'main/choose_registration.html'
+            elif form.cleaned_data['email']:
+                user = form.save(commit=False)
+                user.is_active = False
+                user.save()
+                current_site = get_current_site(request)
+                mail_subject = 'Activate your blog account.'
+                message = render_to_string('main/acc_active_email.html', {
+                    'user': user,
+                    'domain': current_site.domain,
+                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                    'token': account_activation_token.make_token(user),
+                })
+                to_email = form.cleaned_data.get('email')
+                email = EmailMessage(
+                    mail_subject, message, to=[to_email]
+                )
+                email.send()
+                return HttpResponse('Please confirm your email address to complete the registration')
 
-    def get_queryset(self):
-        if "email" in self.request.POST:
-            return HttpResponseRedirect(reverse('signup-email'))
-        if "phone" in self.request.POST:
-            return HttpResponseRedirect(reverse('signup-phone'))
+            elif form.cleaned_data['phone']:
+                phone = request.POST.get('phone')
+                user = form.save(commit=False)
+                # send otp
+                otp = get_random_otp()
+                # send_otp(phone, otp)
+                # send_otp_soap(mobile, otp)
+                # save otp
+                print(otp)
+                user.otp = otp
+                user.is_active = False
+                user.save()
+                request.session['user_phone'] = user.phone
+                return HttpResponseRedirect(reverse('verify'))
+
+        return render(request, 'main/signup.html', {'form': form})
 
 
 class LoginView(auth_views.LoginView):
