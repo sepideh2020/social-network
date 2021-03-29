@@ -1,18 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-<div>
-    <h2>Login / Register</h2>
-</div>
-<form action="." method="post">
-    {% csrf_token %}
-    <input type="text" value="{{ mobile }}" readonly disabled class="fadeIn second" name="mobile">
-    <input type="text" required class="fadeIn second" name="otp" placeholder="Enter OTP">
-    <input type="submit" class="fadeIn fourth" value="Check OTP">
-</form>
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+ <div class=" ui one column stackable center aligned page form grid">
+
+        <div class="eight wide column ">
+
+            <div class="fadeIn first">
+
+                <img class="" style="width: 300px" src="{% static 'images/otp.png' %}" id="icon" alt="User Icon" width="150"/>
+                <br><br>
+            </div>
+            <div>
+                <form action="." method="post" >
+                    {% csrf_token %}
+                    <input type="text" value="{{ phone }}" readonly disabled class="fadeIn second" name="phone">
+                    <br>
+                    <input type="text" required class="fadeIn second" name="otp" placeholder="Enter OTP"><br><br>
+                    <input type="submit" class="ui blue button  centered" value="Check OTP">
+
+                </form>
+            </div>
+        </div>
+    </div>
+{% endblock %}
