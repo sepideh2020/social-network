@@ -137,8 +137,8 @@ MEDIA_ROOT = os.path.join(os.path.dirname(BASE_DIR), "static_cdn", "media_root")
 
 ###redirect
 AUTH_USER_MODEL = 'profiles.CustomUser'  #
-LOGIN_REDIRECT_URL = 'main-post-view'  #
-LOGOUT_REDIRECT_URL = 'home-view'  
+LOGIN_REDIRECT_URL = 'home-view'  #
+LOGOUT_REDIRECT_URL = 'home-view'  #
 
 # email
 EMAIL_USE_TLS = True
