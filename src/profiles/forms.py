@@ -2,6 +2,9 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.core.exceptions import ValidationError
 
+import re
+
+from utility.constant import WEBSITE_REGEX
 from .models import CustomUser
 
 
@@ -26,3 +29,9 @@ class ProfileModelForm(forms.ModelForm):
     class Meta:
         model = CustomUser
         fields = ('first_name', 'last_name', 'bio', 'website', 'avatar')
+
+    # def clean(self):
+    #     cleaned_data = super().clean()
+    #     pattern = WEBSITE_REGEX
+    #     if not re.search(pattern, cleaned_data.get('website')):
+    #         raise ValidationError('your website is invalid')
