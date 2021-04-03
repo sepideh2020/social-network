@@ -20,7 +20,7 @@ from django.contrib.auth.views import LogoutView
 from django.urls import path, include
 
 from profiles import views
-from profiles.views import LoginView, Signup, verify, SignupEmail, SignupPhone
+from profiles.views import LoginView, Signup, verify
 from .view import home_view
 
 urlpatterns = [
@@ -28,8 +28,6 @@ urlpatterns = [
     path('signup/', Signup.as_view(), name='signup'),
     path('verify/', verify, name='verify'),
     path('reset/login/', LoginView.as_view(), name='login'),
-    path('signup-email/', SignupEmail, name='signup-email'),
-    path('signup-phone/', SignupPhone, name='signup-phone'),
     path('logout/', LogoutView.as_view(), name='logout'),
     # reset password
     path('reset/', include('django.contrib.auth.urls')),  # password_reset/
