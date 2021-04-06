@@ -14,7 +14,6 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.generic import ListView, DetailView
 from django.views.generic.base import View
-
 from .forms import ProfileModelForm, LoginForm
 from .forms import SignUpForm
 from .models import CustomUser, Relationship
@@ -108,7 +107,7 @@ def SignupPhone(request):
                 user = CustomUser.objects.get(phone=phone)
                 # send otp
                 otp = get_random_otp()
-                # helper.send_otp(mobile, otp)
+                # send_otp(phone, otp)
                 # save otp
                 print(otp)
                 user.otp = otp

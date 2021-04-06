@@ -75,9 +75,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     phone = models.CharField('Phone number', max_length=13, blank=True, null=True, unique=True,
                              validators=[confirm_phone])
     GENDER_CHOICE = (
-        ('M', 'Male'),
-        ('F', 'Female'),
-        ('O', 'Other')
+        ('Male', 'Male'),
+        ('Female', 'Female'),
+        ('Other', 'Other')
     )
     gender = models.CharField(max_length=6, choices=GENDER_CHOICE, null=True)
     bio = models.TextField(default='no bio ...', max_length=300)
