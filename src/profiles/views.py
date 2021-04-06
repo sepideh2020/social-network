@@ -14,6 +14,7 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.views.generic import ListView, DetailView
 from django.views.generic.base import View
+
 from .forms import ProfileModelForm, LoginForm
 from .forms import SignUpForm
 from .models import CustomUser, Relationship
@@ -31,10 +32,12 @@ def activate(request, uidb64, token):
         user = None
     if user is not None and account_activation_token.check_token(user, token):
         user.is_active = True
-        login(request, user, backend='profiles.backends.PhoneEmailBackend')
-        return redirect('home-view')
+        user.save()
+        login(request, user,backend='profiles.backends.PhoneEmailBackend')
+        return redirect('posts:main-post-view')
+        # return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
     else:
-        return render(request, 'main/acc_active_email.html')
+        return HttpResponse('Activation link is invalid!')
 
 
 def verify(request):
@@ -64,73 +67,73 @@ def verify(request):
     except CustomUser.DoesNotExist:
         return HttpResponseRedirect(reverse('signup-phone'))
 
-
-def SignupEmail(request):
-    """
-        Signing up by email
-    """
-    form = SignUpForm(request.POST)
-    if request.method == 'POST':
-
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = False
-            user.save()
-            current_site = get_current_site(request)
-            mail_subject = 'Activate your blog account.'
-            message = render_to_string('main/acc_active_email.html', {
-                'user': user,
-                'domain': current_site.domain,
-                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                'token': account_activation_token.make_token(user),
-            })
-            to_email = form.cleaned_data.get('email')
-            email = EmailMessage(
-                mail_subject, message, to=[to_email]
-            )
-            email.send()
-            return HttpResponse('Please confirm your email address to complete the registration')
-    else:
-        form = SignUpForm()
-    return render(request, 'main/signup.html', {'form': form})
-
-
-def SignupPhone(request):
-    """
-    Signing up by phone
-    """
-    form = SignUpForm()
-    if request.method == "POST":
-        try:
-            if "phone" in request.POST:
-                phone = request.POST.get('phone')
-                user = CustomUser.objects.get(phone=phone)
-                # send otp
-                otp = get_random_otp()
-                # send_otp(phone, otp)
-                # save otp
-                print(otp)
-                user.otp = otp
-                user.save()
-                request.session['user_phone'] = user.phone
-                return HttpResponseRedirect(reverse('verify'))
-
-        except CustomUser.DoesNotExist:
-            form = SignUpForm(request.POST)
-            if form.is_valid():
-                user = form.save(commit=False)
-                # send otp
-                otp = get_random_otp()
-                # send_otp(phone, otp)
-                # send_otp_soap(mobile, otp)
-                # save otp
-                print(otp)
-                user.otp = otp
-                user.is_active = False
-                user.save()
-                request.session['user_phone'] = user.phone
-                return HttpResponseRedirect(reverse('verify'))
-    return render(request, 'main/signup.html', {'form': form})
+#
+# def SignupEmail(request):
+#     """
+#         Signing up by email
+#     """
+#     form = SignUpForm(request.POST)
+#     if request.method == 'POST':
+#
+#         if form.is_valid():
+#             user = form.save(commit=False)
+#             user.is_active = False
+#             user.save()
+#             current_site = get_current_site(request)
+#             mail_subject = 'Activate your blog account.'
+#             message = render_to_string('main/acc_active_email.html', {
+#                 'user': user,
+#                 'domain': current_site.domain,
+#                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+#                 'token': account_activation_token.make_token(user),
+#             })
+#             to_email = form.cleaned_data.get('email')
+#             email = EmailMessage(
+#                 mail_subject, message, to=[to_email]
+#             )
+#             email.send()
+#             return HttpResponse('Please confirm your email address to complete the registration')
+#     else:
+#         form = SignUpForm()
+#     return render(request, 'main/signup.html', {'form': form})
+#
+#
+# def SignupPhone(request):
+#     """
+#     Signing up by phone
+#     """
+#     form = SignUpForm()
+#     if request.method == "POST":
+#         try:
+#             if "phone" in request.POST:
+#                 phone = request.POST.get('phone')
+#                 user = CustomUser.objects.get(phone=phone)
+#                 # send otp
+#                 otp = get_random_otp()
+#                 # helper.send_otp(mobile, otp)
+#                 # save otp
+#                 print(otp)
+#                 user.otp = otp
+#                 user.save()
+#                 request.session['user_phone'] = user.phone
+#                 return HttpResponseRedirect(reverse('verify'))
+#
+#         except CustomUser.DoesNotExist:
+#             form = SignUpForm(request.POST)
+#             if form.is_valid():
+#                 user = form.save(commit=False)
+#                 # send otp
+#                 otp = get_random_otp()
+#                 # send_otp(phone, otp)
+#                 # send_otp_soap(mobile, otp)
+#                 # save otp
+#                 print(otp)
+#                 user.otp = otp
+#                 user.is_active = False
+#                 user.save()
+#                 request.session['user_phone'] = user.phone
+#                 return HttpResponseRedirect(reverse('verify'))
+#     return render(request, 'main/signup.html', {'form': form})
 
 
 class Signup(View):
@@ -422,7 +425,7 @@ def remove_from_friends(request):
         )
 
         rel.delete()
-        return redirect(request.META.get('HTTP_REFERER'))  # ??  # in order to stay on the same page
+        return redirect(request.META.get('HTTP_REFERER'))  # in order to stay on the same page
     return redirect('profiles:my-profile-view')  # if we are not dealing with post request
     # in order to get rid of user from friends list we use signals,'pre_delete signals function'
 
